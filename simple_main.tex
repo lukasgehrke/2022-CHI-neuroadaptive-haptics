@@ -1,0 +1,39 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{natbib}
+\usepackage{authblk}
+
+% Keywords command
+\providecommand{\keywords}[1]
+{
+  \small	
+  \textbf{\textit{Keywords---}} #1
+}
+
+\title{Example Title}
+\author{Lukas Gehrke}
+\affil{TU Berlin, Germany}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\input{input/0_abstract}
+\end{abstract}
+\keywords{}
+
+\input{input/2_introduction}
+\input{input/3_related_work}
+\input{input/4_user_study_and_methods}
+\input{input/5_results}
+\input{input/6_discussion}
+\input{input/7_conclusions}
+
+\bibliography{input/bibliography} 
+\bibliographystyle{acm}
+
+\end{document}
+
+
