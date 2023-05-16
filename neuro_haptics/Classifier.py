@@ -44,6 +44,7 @@ class Classifier(threading.Thread):
         self.all_data = np.zeros((len(self.chans), self.srate))
         self.feat_data = np.zeros((len(self.chans), self.window_size))
         
+        # TODO Idea here is to smooth the predicted class and probability over 5 consecutive predictions
         self.smooth_class = np.zeros(5)
         self.smooth_proba = np.zeros(5)
 
@@ -62,6 +63,7 @@ class Classifier(threading.Thread):
 
             if frame == self.classifier_srate: # every X ms
 
+                # TODO this is where the features are computed in real time analogous to the training data in pi_tain_bci.py
                 tmp = base_correct(self.all_data, self.baseline_ix-1)
                 # feats = windowed_mean(tmp, self.window_size).flatten().reshape(1,-1)
                 feats = slope(tmp, 'linear').flatten().reshape(1,-1)
@@ -94,6 +96,7 @@ class Classifier(threading.Thread):
                 frame = 0
 
             frame += 1
-            self.all_data = np.roll(self.all_data,-1) # Speed could be increased here, something like all_data[:,0:-2] = all_data[:,1:-1]
+            self.all_data = np.roll(self.all_data,-1) # Speed could be increased here as np.roll creates a copy
 
+            # TODO does this make sense? Idea is to maintain sampling rate from lsl stream or should i just advance a frame if sample is not empty?
             time.sleep(max(1./self.srate - (time.time() - start), 0)) # maintain sampling rate
