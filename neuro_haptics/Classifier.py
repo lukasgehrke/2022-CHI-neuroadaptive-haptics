@@ -45,6 +45,7 @@ class Classifier(threading.Thread):
         self.feat_data = np.zeros((len(self.chans), self.window_size))
         
         # TODO Idea here is to smooth the predicted class and probability over 5 consecutive predictions
+        # MK: Yes this makes sense in a continuous evaluation scenario, it could be a weighted mean where the past has decreasing weights
         self.smooth_class = np.zeros(5)
         self.smooth_proba = np.zeros(5)
 
@@ -99,4 +100,6 @@ class Classifier(threading.Thread):
             self.all_data = np.roll(self.all_data,-1) # Speed could be increased here as np.roll creates a copy
 
             # TODO does this make sense? Idea is to maintain sampling rate from lsl stream or should i just advance a frame if sample is not empty?
+            # MK: Possibly it would be better to just pull the last x seconds from LSL (as much as you need) and then have a sleep of 100ms 
+            # instead of building your own internal ringbuffer
             time.sleep(max(1./self.srate - (time.time() - start), 0)) # maintain sampling rate
