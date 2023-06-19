@@ -1,2 +1,11 @@
 example_data/model_eeg.sav
 neuro_haptics/__pycache__/bci_funcs.cpython-310.pyc
+main.aux
+main.fdb_latexmk
+main.fls
+main.log
+main.out
+main.pdf
+main.synctex.gz
+*.pyc
+*.pyc
