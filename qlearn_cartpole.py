@@ -311,9 +311,7 @@ if __name__ == '__main__':
     #     else: post_processor = PostProcessor(smooth=True, surrogate=True)
 
     # Assuming eroor rate of positive is < 0.5
-    # TODO: no smoothing for now
-    # post_processor = PostProcessor(smooth=False, surrogate=True)
-    post_processor = PostProcessor(smooth=False, surrogate=False)
+    post_processor = PostProcessor(smooth=False, surrogate=True)
 
     steps = 0
     while True:
@@ -344,10 +342,10 @@ if __name__ == '__main__':
             # else:
             #     pass
 
-            #TODO: 
-            # only noisy for now
             reward = pre_processor.process_reward(reward)
-            # reward = post_processor.smooth_reward(state, action, reward)
+            post_processor.collect(state, action, reward)
+            reward = post_processor.process_reward(reward)
+            reward = post_processor.smooth_reward(state, action, reward)
 
             # Digitize the observation to get a state
             cart_position, pole_angle, cart_velocity, angle_rate_of_change = observation
@@ -377,19 +375,20 @@ if __name__ == '__main__':
 
         if steps >= 30000: break
 
-    l = last_time_steps.tolist()
-    if REWARD == "normal":
-        pandas.DataFrame(l).to_csv(os.path.join(LOG_DIR, "normal.csv"))
-    elif REWARD == "noisy":
-        if not SMOOTH:
-            pandas.DataFrame(l).to_csv(os.path.join(LOG_DIR, "noisy.csv"))
-        else:
-            pandas.DataFrame(l).to_csv(os.path.join(LOG_DIR, "noisy_smooth.csv"))
-    else:
-        if not SMOOTH:
-            pandas.DataFrame(l).to_csv(os.path.join(LOG_DIR, "surrogate.csv"))
-        else:
-            pandas.DataFrame(l).to_csv(os.path.join(LOG_DIR, "surrogate_smooth.csv"))
+    # TODO: removing logging for now, implement good logging in our setup  
+    # l = last_time_steps.tolist()
+    # if REWARD == "normal":
+    #     pandas.DataFrame(l).to_csv(os.path.join(LOG_DIR, "normal.csv"))
+    # elif REWARD == "noisy":
+    #     if not SMOOTH:
+    #         pandas.DataFrame(l).to_csv(os.path.join(LOG_DIR, "noisy.csv"))
+    #     else:
+    #         pandas.DataFrame(l).to_csv(os.path.join(LOG_DIR, "noisy_smooth.csv"))
+    # else:
+    #     if not SMOOTH:
+    #         pandas.DataFrame(l).to_csv(os.path.join(LOG_DIR, "surrogate.csv"))
+    #     else:
+    #         pandas.DataFrame(l).to_csv(os.path.join(LOG_DIR, "surrogate_smooth.csv"))
 
     # l.sort()
     # print("Overall score: {:0.2f}".format(last_time_steps.mean()))
