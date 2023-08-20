@@ -12,7 +12,7 @@ class UCBQAgent:
         # Is there any psychological reason why we can't just switch to the
         # next highest level incrementally?
         self.epsilon = epsilon  # epsilon for epsilon-greedy action selection
-        self.epsilon_decay = 0.8
+        self.epsilon_decay = 0.2
         self.epsilon_min = 0 
 
 
