@@ -17,6 +17,8 @@ class UCBQAgent:
 
 
         # Initialize Q-table with zeros
+        # TODO:
+        # Should we initialize this to `-1` instead of zeroes initially?
         self.Q = np.zeros((self.num_states, self.num_actions))
 
         # Initialize N-table for action counts
