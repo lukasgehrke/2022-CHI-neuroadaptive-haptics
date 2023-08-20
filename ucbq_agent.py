@@ -7,10 +7,13 @@ class UCBQAgent:
         self.num_actions = num_actions # num feedback levels
         self.alpha = alpha  # learning rate
         self.gamma = gamma  # discount factor
+        # TODO: implement decay. Is it compatible with ucb?
         # TODO: Do we need epsilon greedy?
         # Is there any psychological reason why we can't just switch to the
         # next highest level incrementally?
         self.epsilon = epsilon  # epsilon for epsilon-greedy action selection
+        self.epsilon_decay = 0.8
+        self.epsilon_min = 0 
 
 
         # Initialize Q-table with zeros
