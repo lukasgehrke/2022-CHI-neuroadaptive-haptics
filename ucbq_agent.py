@@ -6,7 +6,7 @@ class UCBQAgent:
         self.num_states = num_states # num feedback levels
         self.num_actions = num_actions # num feedback levels
         self.alpha = alpha  # learning rate
-        self.alpha_decay = lambda t: np.log10((t+1)/40)
+        self.alpha_decay = lambda t: np.log10(t+1)/40
         self.alpha_min = 0.001
         self.gamma = gamma  # discount factor
         # TODO: implement decay. Is it compatible with ucb?
@@ -15,7 +15,7 @@ class UCBQAgent:
         # next highest level incrementally?
         self.epsilon = epsilon  # epsilon for epsilon-greedy action selection
         # self.epsilon_decay = 0.8
-        self.epsilon_decay = lambda t: np.log10((t+1)/20)        
+        self.epsilon_decay = lambda t: np.log10(t+1)/20
         self.epsilon_min = 0.01
 
 
