@@ -1,11 +1,11 @@
 import numpy as np
 
 class UCBQAgent:
-    def __init__(self, num_states=7, num_actions=7, alpha=0.5, gamma=0.95, epsilon=1.0):
+    def __init__(self, num_states=7, num_actions=7, alpha=0.5, gamma=0.95, epsilon=1.0, params={'alpha': 0.5}):
         # In our case actions == states
         self.num_states = num_states # num feedback levels
         self.num_actions = num_actions # num feedback levels
-        self.alpha = alpha  # learning rate
+        self.alpha = params['alpha']  # learning rate
         self.alpha_decay = lambda t: np.log10(t+1)/40
         self.alpha_min = 0.001
         self.gamma = gamma  # discount factor
