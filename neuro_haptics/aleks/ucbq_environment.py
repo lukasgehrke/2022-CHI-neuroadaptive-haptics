@@ -26,9 +26,6 @@ class ModifiedRandomEnvironment:
         # This simulates listening to stream.
         time.sleep(random.uniform(0.001, 0.002))
 
-        # # The reward is 0 if action matches current state, otherwise -1
-        # answer = 0 if action == 2 else -1 
-
         answer = 0 if action == self.correct_action else -abs(self.correct_action - action)
 
         return answer
