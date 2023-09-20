@@ -125,7 +125,7 @@ class ModifiedPendulumProcessor(noise_estimator.PendulumProcessor):
 
         reward = int(np.ceil(reward))
         #TODO: this needs to be a flag, so we can use it in the final script
-        # reward = self.noisy_reward(reward)
+        reward = self.noisy_reward(reward)
         self.collect(state, self.action, reward)
         reward = self.process_reward(reward)
 
