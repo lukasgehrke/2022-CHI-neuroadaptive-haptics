@@ -36,6 +36,13 @@ correct_action = 6
 env = ModifiedRandomEnvironment(correct_action=correct_action)
 state = 0
 
+# Surrogate rewards setup
+from modified_pendulum_processor import ModifiedPendulumProcessor
+post_processor = ModifiedPendulumProcessor(surrogate=True)
+def adjust_rewards(reward, state, action):    
+    observation, reward, done, info = post_processor.process_step(state, reward, None, None, action)
+    return reward
+
 start_time = time.time()
 
 episode_rewards = 0
@@ -51,7 +58,9 @@ while True:
     # TODO: 
     # send_action_to_stream
     reward, next_state = env.step(action)
-    print(f"{round(elapsed_time, 2)} > {action} -> {reward}")    
+    print(f"{round(elapsed_time, 2)} > {action} -> {reward}")
+    
+    reward = adjust_rewards(reward, state, action)
     
     agent.learn(state, action, reward, next_state)
 
