@@ -1,8 +1,8 @@
 # Run the script with
 # `python run_experiment.py -t 1`
 # This will run a simulation trial, with a total length of 1 seconds.
-# Participant answers will be given every 0.001 to 0.002 seconds.
-# The participant "true" level of feedback is 6 (correct_action).
+# Participant answere will be given every 0.001 to 0.002 seconds.
+# The participant "ture" level of feedback is 2.
 
 # The script will output:
 # - A list of actions taken, in the format: 
@@ -14,27 +14,23 @@
 # - Total timesteps (actions) taken
 # - Total reward obtained
 
-# The agent is rewarded `-n` for guessing the wrong feedback level,
-# where n = abs(guessed_level - correct_level),
-# with `0` for guessing correctly
+# The agent is rewrded `-1` for guessing the wrong feedback level (not 2),
+# and `0` for guessing correctly
 
 import argparse
+from ucbq_agent import UCBQAgent
+from ucbq_environment import ModifiedRandomEnvironment
 import time
 import numpy as np
-
-from ucbq_agent_stateless import UCBQAgent
-from ucbq_environment_stateless import ModifiedRandomEnvironment
-import utils
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-t", "--TimeOut", help = "Stop script after n seconds")
 args = parser.parse_args()
 
-num_states = 7
-agent = UCBQAgent(num_actions=num_states)
-correct_action = 6
-env = ModifiedRandomEnvironment(correct_action=correct_action)
-state = 0
+num_states = 10
+agent = UCBQAgent(num_states=num_states, num_actions=num_states)
+state = 1
+env = ModifiedRandomEnvironment(current_state = state, num_states=num_states)
 
 start_time = time.time()
 
@@ -51,11 +47,17 @@ while True:
     # TODO: 
     # send_action_to_stream
     reward, next_state = env.step(action)
-    print(f"{round(elapsed_time, 2)} > {action} -> {reward}")    
+    
+    print(f"{round(elapsed_time, 2)} > {action} -> {reward}")
     
     agent.learn(state, action, reward, next_state)
+    state = next_state
 
     episode_rewards += reward   
 
-utils.print_agent_stats(agent)
+print(f'Q-table:')
+print(f'{np.around(agent.Q, decimals=4)}')
+print(f'Number of times action was taken:')
+print(f'{agent.N}')
+print(f'Total timesteps: {sum(sum(agent.N)) - 100}')
 print(f'Episode rewards: {episode_rewards}')
