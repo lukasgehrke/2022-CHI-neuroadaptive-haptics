@@ -31,6 +31,27 @@ parser = argparse.ArgumentParser()
 parser.add_argument("-t", "--TimeOut", help = "Stop script after n seconds")
 args = parser.parse_args()
 
+def default_params():
+    """ These are the default parameters used int eh framework. """
+    return {
+            # # Runner parameters
+            # 'max_episodes': int(1E6),         # experiment stops after this many episodes
+            # 'max_steps': int(1E9),            # experiment stops after this many steps
+            # 'multi_runner': False,            # uses multiple runners if True
+            # # Exploration parameters
+            # 'epsilon_anneal_time': int(5E3),  # exploration anneals epsilon over these many steps
+            # 'epsilon_finish': 0.1,            # annealing stops at (and keeps) this epsilon
+            # 'epsilon_start': 1,               # annealing starts at this epsilon
+            'epsilon': 1,               # annealing starts at this epsilon
+            'epsilon_decay': 0.5,
+            # Optimization parameters
+            'alpha': 0.5,                       # learning rate of optimizer
+            # 'gamma': 0.99,                    # discount factor gamma
+           }
+
+params = default_params()
+t = 0
+
 num_actions = 7
 agent = UCBQAgent(num_actions=num_actions)
 correct_action = 6
@@ -58,13 +79,23 @@ while True:
     action = agent.choose_action(state) 
     # TODO: 
     # send_action_to_stream
-    reward, next_state = env.step(action)
+    reward, next_state, done = env.step(action)
     print(f"{round(elapsed_time, 2)} > {action} -> {reward}")
     
     # reward = adjust_rewards(reward, state, action)
     
     agent.learn(state, action, reward, next_state)
-    episode_rewards += reward   
+    episode_rewards += reward
+
+
+    if agent.epsilon > agent.epsilon_min:
+        epsilon_decay = lambda t: np.log10(t+1)/params['epsilon_decay']
+        agent.epsilon -= epsilon_decay(t)    
+    t += 1
+    
+
+    # if done:
+    #     break
 
 utils.print_agent_stats(agent)
 print(f'Episode rewards: {episode_rewards}')
