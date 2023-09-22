@@ -7,11 +7,28 @@ class ModifiedRandomEnvironment(ModifiedRandomEnvironment):
         # The last feedback level sent
         self.current_state = 0
         # The "right" level of feedback
-        self.correct_action = correct_action
+        self.correct_action = correct_action        
+        
+        self.same_action = None
+        self.t = 0
+        self.consecutive_limit = 15
 
     def step(self, action):
+        self.t += 1
         reward = self.get_participant_answer(action)
         # Our case action == state, but migth consdier this separation in the future
         next_state = 0
         self.current_state = next_state
-        return reward, next_state
+        
+        done = False
+        if self.t > 35:
+            if action == self.same_action:
+                consecutive_count += 1
+                if consecutive_count >= self.consecutive_limit:
+                    # tqdm.write(f"Selected action {action} - breaking loop at iteration {t} - consecutive count: {consecutive_count}")
+                    done = True
+            else:
+                same_action = action
+                consecutive_count = 1
+        
+        return reward, next_state, done

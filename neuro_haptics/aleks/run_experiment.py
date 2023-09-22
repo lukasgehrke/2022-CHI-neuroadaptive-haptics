@@ -31,18 +31,18 @@ parser = argparse.ArgumentParser()
 parser.add_argument("-t", "--TimeOut", help = "Stop script after n seconds")
 args = parser.parse_args()
 
-num_states = 7
-agent = UCBQAgent(num_actions=num_states)
+num_actions = 7
+agent = UCBQAgent(num_actions=num_actions)
 correct_action = 6
 env = ModifiedRandomEnvironment(correct_action=correct_action)
 state = 0
 
-# Surrogate rewards setup
-from modified_pendulum_processor import ModifiedPendulumProcessor
-post_processor = ModifiedPendulumProcessor(surrogate=True)
-def adjust_rewards(reward, state, action):    
-    observation, reward, done, info = post_processor.process_step(state, reward, None, None, action)
-    return reward
+# # Surrogate rewards setup
+# from modified_pendulum_processor import ModifiedPendulumProcessor
+# post_processor = ModifiedPendulumProcessor(surrogate=True)
+# def adjust_rewards(reward, state, action):    
+#     observation, reward, done, info = post_processor.process_step(state, reward, None, None, action)
+#     return reward
 
 start_time = time.time()
 
@@ -61,10 +61,9 @@ while True:
     reward, next_state = env.step(action)
     print(f"{round(elapsed_time, 2)} > {action} -> {reward}")
     
-    reward = adjust_rewards(reward, state, action)
+    # reward = adjust_rewards(reward, state, action)
     
     agent.learn(state, action, reward, next_state)
-
     episode_rewards += reward   
 
 utils.print_agent_stats(agent)
