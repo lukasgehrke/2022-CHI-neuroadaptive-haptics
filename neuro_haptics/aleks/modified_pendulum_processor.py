@@ -49,6 +49,7 @@ class ModifiedPendulumProcessor(noise_estimator.PendulumProcessor):
         self.estimate_C()
 
         if self.valid:
+            # TODO: They didn't use the learning rate!
             return self.phi[int(-reward), 0]
         else: return reward
 
@@ -90,7 +91,7 @@ class ModifiedPendulumProcessor(noise_estimator.PendulumProcessor):
             # log_string("sum: " + np.array2string(np.sum(self.C, axis=1), formatter={'float_kind':lambda x: "%.2f" % x}))
 
             if noise_estimator.is_invertible(self.C):
-                # looks ike we still need to generate/assume the noise matrix?!
+                # they're pre-multiplying the rewards with the matrix here
                 self.phi = np.linalg.inv(self.C).dot(self.mmat)
                 self.valid = True
             else: self.valid = False
@@ -124,7 +125,6 @@ class ModifiedPendulumProcessor(noise_estimator.PendulumProcessor):
         #     self.r_sum = 0
 
         reward = int(np.ceil(reward))
-        #TODO: this needs to be a flag, so we can use it in the final script
         reward = self.noisy_reward(reward)
         self.collect(state, self.action, reward)
         reward = self.process_reward(reward)

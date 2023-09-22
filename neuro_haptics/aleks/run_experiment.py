@@ -24,6 +24,7 @@ import numpy as np
 
 from ucbq_agent_stateless import UCBQAgent
 from ucbq_environment_stateless import ModifiedRandomEnvironment
+from modified_pendulum_processor_noiseless import ModifiedPendulumProcessorNoiseless
 import utils
 
 parser = argparse.ArgumentParser()
