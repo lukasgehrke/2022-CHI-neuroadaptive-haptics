@@ -87,10 +87,6 @@ while True:
     agent.learn(state, action, reward, next_state)
     episode_rewards += reward
 
-
-    if agent.epsilon > agent.epsilon_min:
-        epsilon_decay = lambda t: np.log10(t+1)/params['epsilon_decay']
-        agent.epsilon -= epsilon_decay(t)    
     t += 1
     
 
