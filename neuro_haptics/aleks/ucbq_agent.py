@@ -2,26 +2,27 @@ import numpy as np
 
 class UCBQAgent:
     def __init__(self, num_states=7, num_actions=7, alpha=0.5, gamma=0.95, epsilon=1.0, params={
-        'alpha': 0.5, 
-        'epsilon': 1.0,
-        'epsilon_decay': 20
+        # 'alpha': 0.5,
+        # 'alpha_decay': 40,
+        # 'epsilon': 1,
+        # 'alpha_min': 0.001,
+        # 'epsilon_decay': 20
         }):
         # In our case actions == states
         self.num_states = num_states # num feedback levels
         self.num_actions = num_actions # num feedback levels
-        self.alpha = params['alpha']  # learning rate
-        self.alpha_decay = lambda t: np.log10(t+1)/40
-        self.alpha_min = 0.001
+        self.alpha = params.get('alpha', 0.5)  # learning rate
+        self.alpha_decay = lambda t: np.log10(t+1)/params.get('alpha_decay', 40)
+        self.alpha_min = params.get('alpha_min', 0.001)
         self.gamma = gamma  # discount factor
         # TODO: implement decay. Is it compatible with ucb?
         # TODO: Do we need epsilon greedy?
         # Is there any psychological reason why we can't just switch to the
         # next highest level incrementally?
-        self.epsilon = params['epsilon']  # epsilon for epsilon-greedy action selection
-        # self.epsilon_decay = 0.8
-        # self.epsilon_decay = lambda t: np.log10(t+1)/params['epsilon_decay']
-        self.epsilon_decay = params['epsilon_decay']
-        self.epsilon_min = 0.01
+        self.epsilon = params.get('epsilon', 1)  # epsilon for epsilon-greedy action selection
+        self.epsilon_decay_denumerator = params.get('epsilon_decay', 20)
+        # self.epsilon_decay = lambda t: np.log10(t+1)/params.get('epsilon_decay', 20)
+        self.epsilon_min = params.get('epsilon_min', 0.01)
 
 
         # Initialize Q-table with zeros
@@ -49,7 +50,7 @@ class UCBQAgent:
             action = np.argmax(ucb_values)
 
         if self.epsilon > self.epsilon_min:
-            epsilon_decay = lambda t: np.log10(t+1)/self.epsilon_decay
+            epsilon_decay = lambda t: np.log10(t+1)/self.epsilon_decay_denumerator
             self.epsilon -= epsilon_decay(t)
 
         return action
