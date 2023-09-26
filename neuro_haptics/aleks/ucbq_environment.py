@@ -24,7 +24,7 @@ class ModifiedRandomEnvironment:
         # Simulation code
         # Wait random time before giving an answer.
         # This simulates listening to stream.
-        time.sleep(random.uniform(0.001, 0.002))
+        # time.sleep(random.uniform(0.001, 0.002))
 
         answer = 0 if action == self.correct_action else -abs(self.correct_action - action)
 
