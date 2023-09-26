@@ -1,7 +1,7 @@
 import numpy as np
 
 class UCBQAgent:
-    def __init__(self, num_states=7, num_actions=7, alpha=0.5, epsilon=1.0, params={
+    def __init__(self, num_states=7, num_actions=7, params={
         # 'alpha': 0.5,
         # 'alpha_decay': 40,
         # 'epsilon': 1,
@@ -12,7 +12,7 @@ class UCBQAgent:
         self.num_states = num_states # num feedback levels
         self.num_actions = num_actions # num feedback levels
         self.alpha = params.get('alpha', 0.5)  # learning rate
-        self.alpha_decay = lambda t: np.log10(t+1)/params.get('alpha_decay', 40)
+        self.alpha_decay_denumerator = params.get('alpha_decay', 40)
         self.alpha_min = params.get('alpha_min', 0.001)
         self.gamma = params.get('gamma', 0.95)  # discount factor
         # TODO: implement decay. Is it compatible with ucb?
@@ -49,10 +49,13 @@ class UCBQAgent:
             # Select action with maximum UCB value
             action = np.argmax(ucb_values)
 
+        if self.alpha > self.alpha_min:
+            alpha_decay = lambda t: np.log10(t+1)/self.alpha_decay_denumerator
+            self.alpha -= alpha_decay(t)
+
         if self.epsilon > self.epsilon_min:
             epsilon_decay = lambda t: np.log10(t+1)/self.epsilon_decay_denumerator
             self.epsilon -= epsilon_decay(t)
-        #TODO: alpha decay
 
         return action
 

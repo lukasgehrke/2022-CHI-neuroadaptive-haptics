@@ -11,8 +11,10 @@ class ModifiedRandomEnvironment(ModifiedRandomEnvironment):
         
         self.same_action = None
         self.t = 0
-        self.consecutive_limit = 15
+        self.convergence_consecutive_limit = 15
+        self.convergence_count_start = 35
         self.consecutive_count = 0
+
 
     def step(self, action):
         self.t += 1
@@ -24,10 +26,10 @@ class ModifiedRandomEnvironment(ModifiedRandomEnvironment):
         self.current_state = next_state
         
         done = False
-        if self.t > 35:
+        if self.t > self.convergence_count_start:
             if action == self.same_action:
                 self.consecutive_count += 1
-                if self.consecutive_count >= self.consecutive_limit:
+                if self.consecutive_count >= self.convergence_consecutive_limit:
                     # tqdm.write(f"Selected action {action} - breaking loop at iteration {t} - consecutive count: {consecutive_count}")
                     done = True
             else:
