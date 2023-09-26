@@ -49,9 +49,9 @@ class UCBQAgent:
             # Select action with maximum UCB value
             action = np.argmax(ucb_values)
 
-        if self.alpha > self.alpha_min:
-            alpha_decay = lambda t: np.log10(t+1)/self.alpha_decay_denumerator
-            self.alpha -= alpha_decay(t)
+        # if self.alpha > self.alpha_min:
+        #     alpha_decay = lambda t: np.log10(t+1)/self.alpha_decay_denumerator
+        #     self.alpha -= alpha_decay(t)
 
         if self.epsilon > self.epsilon_min:
             epsilon_decay = lambda t: np.log10(t+1)/self.epsilon_decay_denumerator
