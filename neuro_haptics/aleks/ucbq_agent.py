@@ -1,13 +1,7 @@
 import numpy as np
 
 class UCBQAgent:
-    def __init__(self, num_states=7, num_actions=7, params={
-        # 'alpha': 0.5,
-        # 'alpha_decay': 40,
-        # 'epsilon': 1,
-        # 'alpha_min': 0.001,
-        # 'epsilon_decay': 20
-        }):
+    def __init__(self, num_states=7, num_actions=7, params={}):
         # In our case actions == states
         self.num_states = num_states # num feedback levels
         self.num_actions = num_actions # num feedback levels
@@ -33,9 +27,10 @@ class UCBQAgent:
         # Initialize N-table for action counts
         # Needs to be `one` to avoid div by zero
         self.N = np.ones((self.num_states, self.num_actions))
+        self.t = 0
 
     def choose_action(self, state):
-        t = sum(self.N[state])
+        self.t += 1
 
         # Epsilon-greedy action selection
         if np.random.uniform(0, 1) < self.epsilon:
@@ -44,18 +39,18 @@ class UCBQAgent:
         else:
             # Calculate the UCB value for each action
             # TODO: in the original paper there was no `2` but they had a `c`
-            ucb_values = self.Q[state] + np.sqrt((2 * np.log(t)) / self.N[state])
+            ucb_values = self.Q[state] + np.sqrt((2 * np.log(self.t)) / self.N[state])
 
             # Select action with maximum UCB value
             action = np.argmax(ucb_values)
 
-        # if self.alpha > self.alpha_min:
-        #     alpha_decay = lambda t: np.log10(t+1)/self.alpha_decay_denumerator
-        #     self.alpha -= alpha_decay(t)
+        if self.alpha > self.alpha_min:
+            alpha_decay = lambda t: np.log10(t+1)/self.alpha_decay_denumerator
+            self.alpha -= alpha_decay(self.t)
 
         if self.epsilon > self.epsilon_min:
             epsilon_decay = lambda t: np.log10(t+1)/self.epsilon_decay_denumerator
-            self.epsilon -= epsilon_decay(t)
+            self.epsilon -= epsilon_decay(self.t)
 
         return action
 
