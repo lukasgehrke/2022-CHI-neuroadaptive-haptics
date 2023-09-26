@@ -1,7 +1,7 @@
 import numpy as np
 
 class UCBQAgent:
-    def __init__(self, num_states=7, num_actions=7, alpha=0.5, gamma=0.95, epsilon=1.0, params={
+    def __init__(self, num_states=7, num_actions=7, alpha=0.5, epsilon=1.0, params={
         # 'alpha': 0.5,
         # 'alpha_decay': 40,
         # 'epsilon': 1,
@@ -14,15 +14,15 @@ class UCBQAgent:
         self.alpha = params.get('alpha', 0.5)  # learning rate
         self.alpha_decay = lambda t: np.log10(t+1)/params.get('alpha_decay', 40)
         self.alpha_min = params.get('alpha_min', 0.001)
-        self.gamma = gamma  # discount factor
+        self.gamma = params.get('gamma', 0.95)  # discount factor
         # TODO: implement decay. Is it compatible with ucb?
         # TODO: Do we need epsilon greedy?
         # Is there any psychological reason why we can't just switch to the
         # next highest level incrementally?
         self.epsilon = params.get('epsilon', 1)  # epsilon for epsilon-greedy action selection
         self.epsilon_decay_denumerator = params.get('epsilon_decay', 20)
+        self.epsilon_min = params.get('epsilon_min', 0.01)        
         # self.epsilon_decay = lambda t: np.log10(t+1)/params.get('epsilon_decay', 20)
-        self.epsilon_min = params.get('epsilon_min', 0.01)
 
 
         # Initialize Q-table with zeros
@@ -52,6 +52,7 @@ class UCBQAgent:
         if self.epsilon > self.epsilon_min:
             epsilon_decay = lambda t: np.log10(t+1)/self.epsilon_decay_denumerator
             self.epsilon -= epsilon_decay(t)
+        #TODO: alpha decay
 
         return action
 
