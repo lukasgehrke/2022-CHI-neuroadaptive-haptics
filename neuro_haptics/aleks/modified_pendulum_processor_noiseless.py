@@ -6,11 +6,6 @@ import collections
 num_actions = 7
 
 class ModifiedPendulumProcessorNoiseless(modified_pendulum_processor.ModifiedPendulumProcessor):
-    """
-    Learning from perturbed rewards -- Pendulum
-    step 1 - Estimate the confusion matrices (17 x 17)
-    step 2 - Calculate the surrogate rewards
-    """
     # This one is surrogate by default
     def __init__(self):
         super().__init__(weight=0.2, surrogate=True, noise_type="anti_iden", epsilon=1e-6)

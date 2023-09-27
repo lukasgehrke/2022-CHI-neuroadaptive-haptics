@@ -130,3 +130,18 @@ class ModifiedPendulumProcessor(noise_estimator.PendulumProcessor):
         reward = self.process_reward(reward)
 
         return observation, reward, done, info
+    
+    def print(self):
+        print('Original noise/confusion matrix:')
+        print(self.cmat)
+        print('Reward sets:')
+        print(self.r_sets)
+        print('Reward set counts:')
+        
+        key_counts = {key: len(np.array(value)) for key, value in self.r_sets.items()}
+
+        for key, count in key_counts.items():
+            print(f"Key {key}: {count} items")        
+
+        print('Estimated confusion matrix:')
+        print(np.around(self.C, decimals=4))    
