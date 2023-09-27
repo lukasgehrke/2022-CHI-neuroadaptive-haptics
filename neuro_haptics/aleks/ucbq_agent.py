@@ -22,7 +22,8 @@ class UCBQAgent:
         # Initialize Q-table with zeros
         # TODO:
         # Should we initialize this to `-1` instead of zeroes initially?
-        self.Q = np.zeros((self.num_states, self.num_actions))
+        # self.Q = np.zeros((self.num_states, self.num_actions))
+        self.Q = np.full((self.num_states, self.num_actions), -6)
 
         # Initialize N-table for action counts
         # Needs to be `one` to avoid div by zero
@@ -44,9 +45,9 @@ class UCBQAgent:
             # Select action with maximum UCB value
             action = np.argmax(ucb_values)
 
-        if self.alpha > self.alpha_min:
-            alpha_decay = lambda t: np.log10(t+1)/self.alpha_decay_denumerator
-            self.alpha -= alpha_decay(self.t)
+        # if self.alpha > self.alpha_min:
+        #     alpha_decay = lambda t: np.log10(t+1)/self.alpha_decay_denumerator
+        #     self.alpha -= alpha_decay(self.t)
 
         if self.epsilon > self.epsilon_min:
             epsilon_decay = lambda t: np.log10(t+1)/self.epsilon_decay_denumerator
