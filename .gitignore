@@ -9,3 +9,4 @@ main.pdf
 main.synctex.gz
 *.pyc
 *.pyc
+.DS_Store
