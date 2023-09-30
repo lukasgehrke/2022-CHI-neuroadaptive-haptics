@@ -40,9 +40,12 @@ class ModifiedPendulumProcessor(noise_estimator.PendulumProcessor):
 
     def initialize_cmat(self):
         confusion_matrix = np.zeros((self.M, self.M))
-        diag = 0.6
-        diag_1 = 0.15
-        diag_2 = 0.05
+        # diag = 0.6
+        # diag_1 = 0.15
+        # diag_2 = 0.05
+        diag = 0.5
+        diag_1 = 0.2
+        diag_2 = 0.05        
         np.fill_diagonal(confusion_matrix, diag)
         np.fill_diagonal(confusion_matrix[:, 1:], diag_1)
         np.fill_diagonal(confusion_matrix[1:, :], diag_1)
