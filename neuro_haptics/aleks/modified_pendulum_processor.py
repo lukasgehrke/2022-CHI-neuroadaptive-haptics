@@ -3,6 +3,8 @@ import numpy as np
 import collections
 
 import random
+from sklearn.metrics import ConfusionMatrixDisplay
+import matplotlib.pyplot as plt
 
 num_actions = 7
 
@@ -21,7 +23,7 @@ class ModifiedPendulumProcessor(noise_estimator.PendulumProcessor):
         # self.cmat, _ = noise_estimator.initialize_cmat(noise_type, self.M, self.weight)
         self.cmat = self.initialize_cmat()
         # assert (is_invertible(self.cmat))
-        self.cummat = np.cumsum(self.cmat, axis=1)
+        # self.cummat = np.cumsum(self.cmat, axis=1)
         self.mmat = np.expand_dims(np.asarray(range(0, -1 * self.M, -1)), axis=1)
 
         self.r_sum = 0
@@ -40,11 +42,19 @@ class ModifiedPendulumProcessor(noise_estimator.PendulumProcessor):
 
     def initialize_cmat(self):
         confusion_matrix = np.zeros((7, 7))
-        np.fill_diagonal(confusion_matrix, 0.6)
-        np.fill_diagonal(confusion_matrix[:, 1:], 0.15)
-        np.fill_diagonal(confusion_matrix[1:, :], 0.15)
-        np.fill_diagonal(confusion_matrix[:, 2:], 0.05)
-        np.fill_diagonal(confusion_matrix[2:, :], 0.05)
+        diag = 0.6
+        diag_1 = 0.15
+        diag_2 = 0.05
+        np.fill_diagonal(confusion_matrix, diag)
+        np.fill_diagonal(confusion_matrix[:, 1:], diag_1)
+        np.fill_diagonal(confusion_matrix[1:, :], diag_1)
+        np.fill_diagonal(confusion_matrix[:, 2:], diag_2)
+        np.fill_diagonal(confusion_matrix[2:, :], diag_2)
+
+        # Normalize the rows
+        row_sums = confusion_matrix.sum(axis=1)
+        confusion_matrix = confusion_matrix / row_sums[:, np.newaxis]
+        confusion_matrix = np.around(confusion_matrix, decimals=4)
 
         return confusion_matrix
 
@@ -58,12 +68,12 @@ class ModifiedPendulumProcessor(noise_estimator.PendulumProcessor):
     #     return reward
 
     def noisy_reward(self, reward):
-        prob_list = list(self.cummat[abs(reward), :])
+        prob_list = list(self.cmat[abs(reward), :])
         # Use random.choices to pick an index based on probabilities
         chosen_index = random.choices(range(len(prob_list)), weights=prob_list, k=1)[0]
         reward = -1 * chosen_index
 
-        return reward    
+        return reward
 
     def process_reward(self, reward):
         if not self.surrogate:
@@ -156,7 +166,13 @@ class ModifiedPendulumProcessor(noise_estimator.PendulumProcessor):
     
     def print(self):
         print('Original noise/confusion matrix:')
-        print(self.cmat)
+        ConfusionMatrixDisplay(self.cmat).plot()
+        plt.show()        
+        print('Estimated confusion matrix:')
+        estimated_C = np.around(self.C, decimals=4)
+        ConfusionMatrixDisplay(estimated_C).plot()
+        plt.show()
+
         print('Reward sets:')
         print(self.r_sets)
         print('Reward set counts:')
@@ -165,6 +181,3 @@ class ModifiedPendulumProcessor(noise_estimator.PendulumProcessor):
 
         for key, count in key_counts.items():
             print(f"Key {key}: {count} items")        
-
-        print('Estimated confusion matrix:')
-        print(np.around(self.C, decimals=4))    

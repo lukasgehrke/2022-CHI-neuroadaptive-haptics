@@ -21,11 +21,27 @@ def initialize_cmat(noise_type, M, weight):
     flag = True
     cnt = 0
     while flag:
+        # Then, this init_norm matrix is normalized such that the sum of values in each row is 1. 
+        # This is done by dividing each row by the sum of its values.
+        # Finally, a weighted combination of the normalized init_norm matrix 
+        # and the identity matrix (np.identity(M)) is calculated. 
+        # The weight parameter controls the balance between the two matrices. 
+        # A higher weight emphasizes the random noise (from init_norm), while a lower weight 
+        # emphasizes the identity matrix (which has 1s along the diagonal and 0s elsewhere).
         if noise_type == "norm_all":
             init_norm = np.random.rand(M, M) # reward: 0 ~ -16
             cmat = init_norm / init_norm.sum(axis=1, keepdims=1) * weight + \
                    (1 - weight) * np.identity(M)
-
+            
+        # In this method, an identity matrix (i_mat) of size M x M is generated. 
+        # This matrix has 1s along the diagonal and 0s elsewhere, representing a perfect 
+        # confusion matrix where each action is always confused with itself.
+        # Then, a random permutation is applied to each row of the identity matrix using 
+        # map(np.random.shuffle, i_mat). This shuffling introduces noise by changing 
+        # the associations between actions.
+        # Similar to the previous method, a weighted combination of the shuffled 
+        # identity matrix and the original identity matrix is calculated to produce the 
+        # final confusion matrix cmat.            
         elif noise_type == "norm_one":
             i_mat = np.identity(M)
             map(np.random.shuffle, i_mat)
