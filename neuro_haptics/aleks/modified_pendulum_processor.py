@@ -6,20 +6,18 @@ import random
 from sklearn.metrics import ConfusionMatrixDisplay
 import matplotlib.pyplot as plt
 
-num_actions = 7
-
 class ModifiedPendulumProcessor(noise_estimator.PendulumProcessor):
     """
     Learning from perturbed rewards -- Pendulum
     step 1 - Estimate the confusion matrices (17 x 17)
     step 2 - Calculate the surrogate rewards
     """
-    def __init__(self, weight=0.2, surrogate=False, noise_type="anti_iden", epsilon=1e-6, surrogate_c_interval=10):
+    def __init__(self, weight=0.2, surrogate=False, noise_type="anti_iden", epsilon=1e-6, surrogate_c_interval=10, num_unique_rewards=None):
         self.r_sets = {}
         self.weight = weight
         self.surrogate = surrogate
 
-        self.M = num_actions
+        self.M = num_unique_rewards
         # self.cmat, _ = noise_estimator.initialize_cmat(noise_type, self.M, self.weight)
         self.cmat = self.initialize_cmat()
         # assert (is_invertible(self.cmat))
@@ -41,7 +39,7 @@ class ModifiedPendulumProcessor(noise_estimator.PendulumProcessor):
         self.surrogate_c_interval = surrogate_c_interval
 
     def initialize_cmat(self):
-        confusion_matrix = np.zeros((7, 7))
+        confusion_matrix = np.zeros((self.M, self.M))
         diag = 0.6
         diag_1 = 0.15
         diag_2 = 0.05
@@ -90,6 +88,7 @@ class ModifiedPendulumProcessor(noise_estimator.PendulumProcessor):
         # if self.counter >= 1000 and self.counter % 100 == 0:
         if self.counter >= self.surrogate_c_interval and self.counter % self.surrogate_c_interval == 0:        
             self.C = np.zeros((self.M, self.M))
+            # self.C = np.identity(self.M)
             self.count = [0] * self.M
 
             for k in self.r_sets.keys():
@@ -117,11 +116,14 @@ class ModifiedPendulumProcessor(noise_estimator.PendulumProcessor):
                 for pred, count in list_freq:
                     self.C[int(-truth), int(-pred)] += float(count) / self.count[int(-truth)]
 
-            diag = np.diag(self.C)
-            anti_diag = np.diag(np.fliplr(self.C))
+            # diag = np.diag(self.C)
+            # anti_diag = np.diag(np.fliplr(self.C))
             # log_string("diag: " + np.array2string(diag, formatter={'float_kind':lambda x: "%.5f" % x}))
             # log_string("anti_diag:" + np.array2string(anti_diag, formatter={'float_kind':lambda x: "%.5f" % x}))
             # log_string("sum: " + np.array2string(np.sum(self.C, axis=1), formatter={'float_kind':lambda x: "%.2f" % x}))
+
+            # self.C = self.C * np.identity(self.M)
+            # self.C = init_norm.sum(axis=1, keepdims=1)
 
             if noise_estimator.is_invertible(self.C):
                 # they're pre-multiplying the rewards with the matrix here
@@ -165,9 +167,9 @@ class ModifiedPendulumProcessor(noise_estimator.PendulumProcessor):
         return observation, reward, done, info
     
     def print(self):
-        print('Original noise/confusion matrix:')
-        ConfusionMatrixDisplay(self.cmat).plot()
-        plt.show()        
+        # print('Original noise/confusion matrix:')
+        # ConfusionMatrixDisplay(self.cmat).plot()
+        # plt.show()        
         print('Estimated confusion matrix:')
         estimated_C = np.around(self.C, decimals=4)
         ConfusionMatrixDisplay(estimated_C).plot()
