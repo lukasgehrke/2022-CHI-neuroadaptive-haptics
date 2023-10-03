@@ -24,3 +24,137 @@ def get_cumsum_rewards(rewards):
     time_steps = np.arange(1, len(rewards) + 1)
     mean_rewards = cumulative_sum_rewards / time_steps
     return mean_rewards
+
+
+from ucbq_agent_stateless import UCBQAgent
+from ucbq_environment_stateless import ModifiedRandomEnvironment
+from modified_pendulum_processor import ModifiedPendulumProcessor
+
+def runner(adjust_rewards=None, 
+           agent=None,
+           env=None,
+           params={}):
+
+    agent = UCBQAgent(params=params) if agent is None else agent
+    env = env if env else ModifiedRandomEnvironment()
+
+    episode_rewards = 0
+    rewards = []
+    q_values_for_chart = []
+    
+    t = 0
+    start_action = params.get('start_action', 0)
+    action = start_action
+    state = 0
+    max_steps = params.get('max_steps', 120)
+    correct_action = params.get('correct_action', 3)
+    plots = params.get('plots', True)
+    noise = params.get('noise', False)
+    num_actions = params.get('num_actions', 7)
+    surrogate = params.get('surrogate', False)
+    surrogate_c_interval = params.get('surrogate_c_interval', 10)
+    
+    reward_processor = None
+
+    # surrogate can only be with noise=True for now
+    if surrogate:
+        noise = True
+    
+    if noise: 
+        #TODO: should we keep/carry over the estimated confusion matrix across all episodes?
+        # num_unique_rewards = correct_action + 1
+        num_unique_rewards = get_num_unique_rewards(num_actions, correct_action)
+        reward_processor = ModifiedPendulumProcessor(surrogate=surrogate, surrogate_c_interval=surrogate_c_interval, num_unique_rewards=num_unique_rewards)
+
+    while True:
+        if t == max_steps - 1:
+            break
+
+        action = agent.choose_action(state) 
+        reward, next_state, done = env.step(action)        
+        
+        if done:
+            break     
+
+        rewards.append(reward)
+
+        if noise or surrogate:
+            observation, reward, done, info = reward_processor.process_step(state, reward, None, None, action)
+        
+        agent.learn(state, action, reward, next_state)
+        episode_rewards += reward
+        t += 1
+
+        if plots:
+            if t % 10 == 0:
+                sum_q_values_across_states = np.around(np.sum(agent.Q, axis=0), decimals=4)
+                q_values_for_chart.append(sum_q_values_across_states)
+      
+                
+    episode_length = t + 1
+    selected_action = action 
+    
+    if t == max_steps - 1:
+        # If we reached the end of the episode
+        # select the action with the highest Q-values as the correct one
+        sum_q_values_across_states = np.sum(agent.Q, axis=0)
+        selected_action = np.argmax(sum_q_values_across_states)
+
+    return q_values_for_chart, rewards, episode_length, selected_action, reward_processor
+
+from tqdm import tqdm 
+
+def qLearningExperiment(learner=None, params={}):
+    plots = params.get('plots', True)
+    num_episodes = params.get('num_episodes', 100)
+    correct_action = params.get('correct_action', 3)
+
+    q_values_all_experiments = []
+    rewards_all_experiments = []
+    episode_lengths = []
+    selected_actions = []
+
+    for i in tqdm(range(num_episodes)):
+        # TODO: .reset() instead of re-creating?
+        agent = UCBQAgent(params=params) if learner is None else learner
+        env = ModifiedRandomEnvironment(correct_action=correct_action)
+        q_values_for_chart, rewards, episode_length, selected_action, reward_processor = runner(env=env, agent=agent, params=params)
+        selected_actions.append(selected_action)
+        episode_lengths.append(episode_length)
+                
+        rewards_all_experiments.append(rewards)
+        q_values_all_experiments.append(q_values_for_chart)
+
+    correct_count = selected_actions.count(correct_action)
+    accuracy = (correct_count / len(selected_actions)) * 100
+    
+    return q_values_all_experiments, rewards_all_experiments, episode_lengths, selected_actions, accuracy, reward_processor
+
+import matplotlib.pyplot as plt
+import pandas as pd
+
+def plot_mean_q_values(params={}):
+    q_values_all_experiments, rewards_all_experiments, episode_lengths, selected_actions, accuracy, last_reward_processor = qLearningExperiment(params=params)
+    print(f'Accuracy: {accuracy}')    
+    print(f'Mean episode length: {np.mean(episode_lengths)}')
+
+    all_mean_rewards = [ get_cumsum_rewards(rewards) for rewards in rewards_all_experiments ]
+
+    all_mean_rewards = pd.DataFrame(all_mean_rewards) # rewards have different lengths
+    # because they terminate earlier sometimes
+    mean_matrix = np.mean(all_mean_rewards, axis=0)
+    mean_rewards_across_episodes = pd.DataFrame(mean_matrix)
+
+    mean_matrix = get_mean_across_episodes(q_values_all_experiments)
+    mean_q_values_across_episodes = pd.DataFrame(mean_matrix)
+    if params.get('noise', False): 
+        print('Last reward processor:')
+        last_reward_processor.print()
+
+    fig, axes = plt.subplots(2, 2, figsize=(8, 6))
+    mean_rewards_across_episodes.plot(ax=axes[0, 0], title='Mean reward for this step across all episodes')
+    mean_q_values_across_episodes.plot(ax=axes[0, 1], title='Mean Q-values accross all episodes')
+    pd.DataFrame(episode_lengths).plot(ax=axes[1, 0], title='Episode lengths', marker='*')
+    pd.DataFrame(selected_actions).plot(ax=axes[1, 1], title='Guessed correct action per episode', marker='*')
+    plt.tight_layout()
+    plt.show()
