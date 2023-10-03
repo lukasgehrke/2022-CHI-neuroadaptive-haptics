@@ -7,3 +7,6 @@ def print_agent_stats(agent):
     print(f'{agent.N}')
     print(f'Total timesteps:')
     print(agent.t)
+
+def get_num_unique_rewards(num_actions, correct_action):
+    return max(abs(num_actions - correct_action), abs(correct_action + 1))
