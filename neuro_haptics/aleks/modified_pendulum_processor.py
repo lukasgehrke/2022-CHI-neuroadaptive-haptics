@@ -12,14 +12,16 @@ class ModifiedPendulumProcessor(noise_estimator.PendulumProcessor):
     step 1 - Estimate the confusion matrices (17 x 17)
     step 2 - Calculate the surrogate rewards
     """
-    def __init__(self, weight=0.2, surrogate=False, noise_type="anti_iden", epsilon=1e-6, surrogate_c_interval=10, num_unique_rewards=None):
+    def __init__(self, weight=0.2, surrogate=False, noise_type="anti_iden", epsilon=1e-6, surrogate_c_interval=10, 
+                 num_unique_rewards=None,
+                 diag=0.5):
         self.r_sets = {}
         self.weight = weight
         self.surrogate = surrogate
 
         self.M = num_unique_rewards
         # self.cmat, _ = noise_estimator.initialize_cmat(noise_type, self.M, self.weight)
-        self.cmat = self.initialize_cmat()
+        self.cmat = self.initialize_cmat(diag=diag)
         # assert (is_invertible(self.cmat))
         # self.cummat = np.cumsum(self.cmat, axis=1)
         self.mmat = np.expand_dims(np.asarray(range(0, -1 * self.M, -1)), axis=1)
@@ -38,14 +40,14 @@ class ModifiedPendulumProcessor(noise_estimator.PendulumProcessor):
 
         self.surrogate_c_interval = surrogate_c_interval
 
-    def initialize_cmat(self):
+    def initialize_cmat(self, diag=0.5):
         confusion_matrix = np.zeros((self.M, self.M))
         # diag = 0.6
         # diag_1 = 0.15
         # diag_2 = 0.05
-        diag = 0.5
-        diag_1 = 0.2
-        diag_2 = 0.05        
+        # diag = 0.5
+        diag_1 = (1-diag) * (0.8/2)
+        diag_2 = (1-diag) * (0.2/2)
         np.fill_diagonal(confusion_matrix, diag)
         np.fill_diagonal(confusion_matrix[:, 1:], diag_1)
         np.fill_diagonal(confusion_matrix[1:, :], diag_1)
