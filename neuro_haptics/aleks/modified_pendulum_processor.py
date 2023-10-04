@@ -42,10 +42,6 @@ class ModifiedPendulumProcessor(noise_estimator.PendulumProcessor):
 
     def initialize_cmat(self, diag=0.5):
         confusion_matrix = np.zeros((self.M, self.M))
-        # diag = 0.6
-        # diag_1 = 0.15
-        # diag_2 = 0.05
-        # diag = 0.5
         diag_1 = (1-diag) * (0.8/2)
         diag_2 = (1-diag) * (0.2/2)
         np.fill_diagonal(confusion_matrix, diag)
@@ -179,12 +175,14 @@ class ModifiedPendulumProcessor(noise_estimator.PendulumProcessor):
         estimated_C = np.around(self.C, decimals=4)
         ConfusionMatrixDisplay(estimated_C).plot()
         plt.show()
+        
+        r_sets_sorted = sorted(self.r_sets.items(), key=lambda item: item[0][1])
 
         print('Reward sets:')
-        print(self.r_sets)
-        print('Reward set counts:')
+        for key, value in r_sets_sorted:
+            print(f"{key}: {value}")
         
-        key_counts = {key: len(np.array(value)) for key, value in self.r_sets.items()}
-
+        print('Reward set counts:')
+        key_counts = {key: len(np.array(value)) for key, value in r_sets_sorted}
         for key, count in key_counts.items():
-            print(f"Key {key}: {count} items")        
+            print(f"Key {key}: {count} items")
