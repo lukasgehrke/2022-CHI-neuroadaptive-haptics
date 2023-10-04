@@ -42,9 +42,9 @@ class UCBQAgent:
             idxs_max_values = np.flatnonzero(ucb_values == ucb_values.max())
             action = np.random.choice(idxs_max_values)
 
-        # if self.alpha > self.alpha_min:
-        #     alpha_decay = lambda t: np.log10(t+1)/self.alpha_decay_denumerator
-        #     self.alpha -= alpha_decay(self.t)
+        if self.alpha > self.alpha_min:
+            alpha_decay = lambda t: np.log10(t+1)/self.alpha_decay_denumerator
+            self.alpha -= alpha_decay(self.t)
 
         if self.epsilon > self.epsilon_min:
             epsilon_decay = lambda t: np.log10(t+1)/self.epsilon_decay_denumerator

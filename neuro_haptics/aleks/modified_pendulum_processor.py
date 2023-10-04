@@ -12,7 +12,9 @@ class ModifiedPendulumProcessor(noise_estimator.PendulumProcessor):
     step 1 - Estimate the confusion matrices (17 x 17)
     step 2 - Calculate the surrogate rewards
     """
-    def __init__(self, weight=0.2, surrogate=False, noise_type="anti_iden", epsilon=1e-6, surrogate_c_interval=10, 
+    def __init__(self, weight=0.2, surrogate=False, noise_type="anti_iden", epsilon=1e-6, 
+                 surrogate_c_interval=10,
+                 surrogate_c_interval_min = 30,
                  num_unique_rewards=None,
                  diag=0.5):
         self.r_sets = {}
@@ -39,6 +41,7 @@ class ModifiedPendulumProcessor(noise_estimator.PendulumProcessor):
         self.valid = False
 
         self.surrogate_c_interval = surrogate_c_interval
+        self.surrogate_c_interval_min = surrogate_c_interval_min
 
     def initialize_cmat(self, diag=0.5):
         confusion_matrix = np.zeros((self.M, self.M))
@@ -86,8 +89,7 @@ class ModifiedPendulumProcessor(noise_estimator.PendulumProcessor):
         else: return reward
 
     def estimate_C(self):
-        # if self.counter >= 1000 and self.counter % 100 == 0:
-        if self.counter >= self.surrogate_c_interval and self.counter % self.surrogate_c_interval == 0:        
+        if self.counter >= self.surrogate_c_interval_min and self.counter % self.surrogate_c_interval == 0:        
             self.C = np.zeros((self.M, self.M))
             # self.C = np.identity(self.M)
             self.count = [0] * self.M
