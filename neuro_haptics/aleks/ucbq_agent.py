@@ -38,7 +38,9 @@ class UCBQAgent:
             ucb_values = self.Q[state] + np.sqrt((2 * np.log(self.t)) / self.N[state])
 
             # Select action with maximum UCB value
-            action = np.argmax(ucb_values)
+            # Break ties randomly
+            idxs_max_values = np.flatnonzero(ucb_values == ucb_values.max())
+            action = np.random.choice(idxs_max_values)
 
         # if self.alpha > self.alpha_min:
         #     alpha_decay = lambda t: np.log10(t+1)/self.alpha_decay_denumerator
