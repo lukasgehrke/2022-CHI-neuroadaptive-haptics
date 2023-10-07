@@ -40,6 +40,8 @@ def runner(adjust_rewards=None,
 
     episode_rewards = 0
     rewards = []
+    alphas = []
+    epsilons = []
     q_values_for_chart = []
     
     t = 0
@@ -53,6 +55,7 @@ def runner(adjust_rewards=None,
     num_actions = params.get('num_actions', 7)
     surrogate = params.get('surrogate', False)
     surrogate_c_interval = params.get('surrogate_c_interval', 10)
+    diag = params.get('diag', 0.5)
     
     reward_processor = None
 
@@ -64,19 +67,24 @@ def runner(adjust_rewards=None,
         #TODO: should we keep/carry over the estimated confusion matrix across all episodes?
         # num_unique_rewards = correct_action + 1
         num_unique_rewards = get_num_unique_rewards(num_actions, correct_action)
-        reward_processor = ModifiedPendulumProcessor(surrogate=surrogate, surrogate_c_interval=surrogate_c_interval, num_unique_rewards=num_unique_rewards)
+        reward_processor = ModifiedPendulumProcessor(surrogate=surrogate, 
+                                                     surrogate_c_interval=surrogate_c_interval, 
+                                                     num_unique_rewards=num_unique_rewards,
+                                                     diag=diag)
 
     while True:
         if t == max_steps - 1:
             break
 
-        action = agent.choose_action(state) 
+        action = agent.choose_action(state)
         reward, next_state, done = env.step(action)        
         
         if done:
             break     
 
         rewards.append(reward)
+        alphas.append(agent.alpha)
+        epsilons.append(agent.epsilon)
 
         if noise or surrogate:
             observation, reward, done, info = reward_processor.process_step(state, reward, None, None, action)
@@ -100,7 +108,7 @@ def runner(adjust_rewards=None,
         sum_q_values_across_states = np.sum(agent.Q, axis=0)
         selected_action = np.argmax(sum_q_values_across_states)
 
-    return q_values_for_chart, rewards, episode_length, selected_action, reward_processor
+    return q_values_for_chart, rewards, episode_length, selected_action, reward_processor, alphas, epsilons
 
 from tqdm import tqdm 
 
@@ -118,7 +126,7 @@ def qLearningExperiment(learner=None, params={}):
         # TODO: .reset() instead of re-creating?
         agent = UCBQAgent(params=params) if learner is None else learner
         env = ModifiedRandomEnvironment(correct_action=correct_action)
-        q_values_for_chart, rewards, episode_length, selected_action, reward_processor = runner(env=env, agent=agent, params=params)
+        q_values_for_chart, rewards, episode_length, selected_action, reward_processor, _, _ = runner(env=env, agent=agent, params=params)
         selected_actions.append(selected_action)
         episode_lengths.append(episode_length)
                 
@@ -154,7 +162,9 @@ def plot_mean_q_values(params={}):
     fig, axes = plt.subplots(2, 2, figsize=(8, 6))
     mean_rewards_across_episodes.plot(ax=axes[0, 0], title='Mean reward for this step across all episodes')
     mean_q_values_across_episodes.plot(ax=axes[0, 1], title='Mean Q-values accross all episodes')
-    pd.DataFrame(episode_lengths).plot(ax=axes[1, 0], title='Episode lengths', marker='*')
-    pd.DataFrame(selected_actions).plot(ax=axes[1, 1], title='Guessed correct action per episode', marker='*')
+    # pd.DataFrame(episode_lengths).plot.bar(ax=axes[1, 0], title='Episode lengths')
+    pd.Series(episode_lengths).value_counts().sort_index().plot.bar(ax=axes[1, 0], title='Episode lengths')
+    # pd.DataFrame(selected_actions).plot.bar(ax=axes[1, 1], title='Guessed correct action per episode')
+    pd.Series(selected_actions).value_counts().sort_index().plot.bar(ax=axes[1, 1], title='Guessed correct action per episode')
     plt.tight_layout()
     plt.show()
