@@ -21,7 +21,7 @@ class ModifiedRandomEnvironment(ModifiedRandomEnvironment):
 
         reward = self.get_participant_answer(action)
         # TODO: delete
-        # Our case action == state, but migth consdier this separation in the future
+        # Our case action == state, but migth consider this separation in the future
         next_state = 0
         self.current_state = next_state
         

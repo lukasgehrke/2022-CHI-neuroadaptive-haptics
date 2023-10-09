@@ -12,20 +12,6 @@ class ModifiedRandomEnvironment:
         self.correct_action = correct_action
 
     def get_participant_answer(self, action):
-        # TODO: use this code when we'll be listenting to the 
-        # actual stream
-        # 
-        # while True:
-        #   answer = get_response_from_stream()
-        #   if (answer):
-        #     return answer
-        #     break
-
-        # Simulation code
-        # Wait random time before giving an answer.
-        # This simulates listening to stream.
-        # time.sleep(random.uniform(0.001, 0.002))
-
         answer = 0 if action == self.correct_action else -abs(self.correct_action - action)
 
         return answer

@@ -59,11 +59,6 @@ class UCBQAgent:
         # TODO: double check if this is correct
         self.Q[state][action] = (1 - self.alpha) * self.Q[state][action] \
             + self.alpha * (reward + self.gamma * np.max(self.Q[next_state]))
-        # TODO: this is the code from another resource, need to compare if
-        # they're equal
-        # Update Q-table using Q-learning update rule
-        # Qt[i,at] = Qt[i,at] + (Rt - Qt[i,at])/(arm_count[at] + 1)
-
 
     def reset(self):
         # Reset Q-table and N-table
