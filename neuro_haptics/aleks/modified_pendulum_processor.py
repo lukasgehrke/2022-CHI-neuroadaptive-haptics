@@ -175,7 +175,10 @@ class ModifiedPendulumProcessor(noise_estimator.PendulumProcessor):
         # plt.show()        
         print('Estimated confusion matrix:')
         estimated_C = np.around(self.C, decimals=4)
-        ConfusionMatrixDisplay(estimated_C).plot()
+        disp = ConfusionMatrixDisplay(estimated_C)
+        ax = disp.plot(colorbar=False).ax_
+        ax.set_ylabel('True Reward')
+        ax.set_xlabel('Reported Noisy Reward') 
         plt.show()
         
         r_sets_sorted = sorted(self.r_sets.items(), key=lambda item: item[0][1])
