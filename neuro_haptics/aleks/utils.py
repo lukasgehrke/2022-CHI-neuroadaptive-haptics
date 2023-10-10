@@ -72,6 +72,10 @@ def runner(adjust_rewards=None,
                                                      num_unique_rewards=num_unique_rewards,
                                                      diag=diag)
 
+    if plots:
+        sum_q_values_across_states = np.around(np.sum(agent.Q, axis=0), decimals=4)
+        q_values_for_chart.append(sum_q_values_across_states)
+
     while True:
         if t == max_steps - 1:
             break
@@ -80,6 +84,8 @@ def runner(adjust_rewards=None,
         reward, next_state, done = env.step(action)        
         
         if done:
+            sum_q_values_across_states = np.around(np.sum(agent.Q, axis=0), decimals=4)
+            q_values_for_chart.append(sum_q_values_across_states)            
             break     
 
         rewards.append(reward)
@@ -154,7 +160,8 @@ def plot_mean_q_values(params={}):
     mean_rewards_across_episodes = pd.DataFrame(mean_matrix)
 
     mean_matrix = get_mean_across_episodes(q_values_all_experiments)
-    mean_q_values_across_episodes = pd.DataFrame(mean_matrix)
+    mean_q_values_across_episodes = pd.DataFrame(mean_matrix) 
+
     if params.get('noise', False): 
         print('Last reward processor:')
         last_reward_processor.print()
@@ -162,7 +169,13 @@ def plot_mean_q_values(params={}):
     fig, axes = plt.subplots(2, 2, figsize=(8, 6))
     mean_rewards_across_episodes.plot(ax=axes[0, 0], title='Mean reward for this step across all episodes')
     mean_q_values_across_episodes.plot(ax=axes[0, 1], title='Mean Q-values accross all episodes')
+    x_values = [10 * i for i in range(mean_q_values_across_episodes.shape[0])]
+    axes[0, 1].set_xticks(range(len(x_values)))
+    axes[0, 1].set_xticklabels(x_values) 
+    
     pd.Series(episode_lengths).value_counts().sort_index().plot.bar(ax=axes[1, 0], title='Episode lengths')
     pd.Series(selected_actions).value_counts().sort_index().plot.bar(ax=axes[1, 1], title='Guessed correct action')
+    # accuracy up until now
+    
     plt.tight_layout()
     plt.show()

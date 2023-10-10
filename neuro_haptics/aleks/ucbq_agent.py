@@ -18,7 +18,8 @@ class UCBQAgent:
         self.epsilon_min = params.get('epsilon_min', 0.01)        
         # self.epsilon_decay = lambda t: np.log10(t+1)/params.get('epsilon_decay', 20)
 
-        self.Q = np.full((self.num_states, self.num_actions), -6)
+        start_q_value = -(self.num_actions - 1)
+        self.Q = np.full((self.num_states, self.num_actions), start_q_value)
 
         # Initialize N-table for action counts
         # Needs to be `one` to avoid div by zero
