@@ -1,4 +1,5 @@
 import numpy as np
+np.random.seed(69)
 
 class UCBQAgent:
     def __init__(self, params={}):

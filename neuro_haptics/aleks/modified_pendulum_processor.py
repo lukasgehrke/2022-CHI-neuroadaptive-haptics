@@ -1,8 +1,10 @@
 import noise_estimator
 import numpy as np
+np.random.seed(69)
 import collections
 
 import random
+random.seed(69)
 from sklearn.metrics import ConfusionMatrixDisplay
 import matplotlib.pyplot as plt
 
