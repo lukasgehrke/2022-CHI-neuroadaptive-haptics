@@ -67,10 +67,9 @@ def runner(adjust_rewards=None,
         #TODO: should we keep/carry over the estimated confusion matrix across all episodes?
         # num_unique_rewards = correct_action + 1
         num_unique_rewards = get_num_unique_rewards(num_actions, correct_action)
-        reward_processor = ModifiedPendulumProcessor(surrogate=surrogate, 
-                                                     surrogate_c_interval=surrogate_c_interval, 
-                                                     num_unique_rewards=num_unique_rewards,
-                                                     diag=diag)
+        reward_processor = ModifiedPendulumProcessor(num_unique_rewards=num_unique_rewards,
+                                                     diag=diag,
+                                                     params=params)
 
     if plots:
         sum_q_values_across_states = np.around(np.sum(agent.Q, axis=0), decimals=4)
@@ -168,10 +167,10 @@ def plot_mean_q_values(params={}):
 
     fig, axes = plt.subplots(2, 2, figsize=(8, 6))
     mean_rewards_across_episodes.plot(ax=axes[0, 0], title='Mean reward for this step across all episodes')
-    mean_q_values_across_episodes.plot(ax=axes[0, 1], title='Mean Q-values accross all episodes')
-    x_values = [10 * i for i in range(mean_q_values_across_episodes.shape[0])]
-    axes[0, 1].set_xticks(range(len(x_values)))
-    axes[0, 1].set_xticklabels(x_values) 
+    ax = plt.subplot(2, 2, 2)
+    ax.set_ylabel('Q-value (mean across all episodes)')
+    lines = ax.plot(mean_q_values_across_episodes)
+    ax.legend(lines, mean_q_values_across_episodes.columns)
     
     pd.Series(episode_lengths).value_counts().sort_index().plot.bar(ax=axes[1, 0], title='Episode lengths')
     pd.Series(selected_actions).value_counts().sort_index().plot.bar(ax=axes[1, 1], title='Guessed correct action')
@@ -179,3 +178,5 @@ def plot_mean_q_values(params={}):
     
     plt.tight_layout()
     plt.show()
+
+    return mean_matrix[-1]
