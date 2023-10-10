@@ -130,7 +130,7 @@ def qLearningExperiment(learner=None, params={}):
 
     for i in tqdm(range(num_episodes)):
         # TODO: .reset() instead of re-creating?
-        agent = UCBQAgent(params=params) if learner is None else learner
+        agent = learner
         env = ModifiedRandomEnvironment(correct_action=correct_action)
         q_values_for_chart, rewards, episode_length, selected_action, reward_processor, _, _ = runner(env=env, agent=agent, params=params)
         selected_actions.append(selected_action)

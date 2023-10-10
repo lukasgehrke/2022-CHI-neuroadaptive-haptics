@@ -1,7 +1,7 @@
 from ucbq_environment import ModifiedRandomEnvironment
 
 class ModifiedRandomEnvironment(ModifiedRandomEnvironment):
-    def __init__(self, correct_action = 6):
+    def __init__(self, correct_action = 6, params={}):
         # The total number of feedback levels
         self.num_states = 1
         # The last feedback level sent
@@ -11,8 +11,8 @@ class ModifiedRandomEnvironment(ModifiedRandomEnvironment):
         
         self.same_action = None
         self.t = 0
-        self.convergence_consecutive_limit = 15
-        self.convergence_count_start = 35
+        self.convergence_count_start = params.get('convergence_count_start', 35)
+        self.convergence_consecutive_limit = params.get('convergence_consecutive_limit', 15)
         self.consecutive_count = 0
 
 
