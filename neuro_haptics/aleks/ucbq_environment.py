@@ -1,4 +1,6 @@
 import numpy as np
+# random seed will only give persistent results if you re-import the script
+# and restart the kernel in the notebook
 np.random.seed(69)
 class ModifiedRandomEnvironment:
     def __init__(self, correct_action = 6, num_states=10):

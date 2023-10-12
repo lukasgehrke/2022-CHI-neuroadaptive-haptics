@@ -10,8 +10,8 @@ import matplotlib.pyplot as plt
 
 class ModifiedPendulumProcessor(noise_estimator.PendulumProcessor):
     """
-    Learning from perturbed rewards -- Pendulum
-    step 1 - Estimate the confusion matrices (17 x 17)
+    Learning from perturbed rewards
+    step 1 - Estimate the confusion matrices
     step 2 - Calculate the surrogate rewards
     """
     def __init__(self, weight=0.2, noise_type="anti_iden", epsilon=1e-6, 
@@ -80,6 +80,36 @@ class ModifiedPendulumProcessor(noise_estimator.PendulumProcessor):
             return self.phi[int(-reward), 0]
         else: return reward
 
+    # def enforce_symmetry_and_normalization(self, matrix):
+    #     # Set diagonal to 1 for rows with sum 0
+    #     row_sums = matrix.sum(axis=1)
+    #     zero_sum_rows = row_sums == 0
+    #     matrix[zero_sum_rows, zero_sum_rows] = 1  
+
+    #     # Ensure symmetry
+    #     matrix = (matrix + matrix.T) / 2
+
+    #     # Normalize rows to 1
+    #     row_sums = matrix.sum(axis=1)        
+    #     matrix = matrix / row_sums[:, np.newaxis]        
+
+    #     return matrix
+
+    def enforce_symmetry_and_normalization(self, matrix):
+        # Step 1: Set diagonal to 1 for rows with sum 0
+        row_sums = matrix.sum(axis=1)
+        zero_sum_rows = row_sums == 0
+        matrix[zero_sum_rows, zero_sum_rows] = 1
+
+        # Step 2: Ensure symmetry
+        symmetrical_matrix = (matrix + matrix.T) / 2
+
+        # Step 3: Normalize rows to 1
+        row_sums = symmetrical_matrix.sum(axis=1)
+        normalized_matrix = symmetrical_matrix / row_sums[:, np.newaxis]
+
+        return normalized_matrix
+    
     def estimate_C(self):
         if self.counter >= self.surrogate_c_interval_min and self.counter % self.surrogate_c_interval == 0:        
             self.C = np.zeros((self.M, self.M))
@@ -117,11 +147,19 @@ class ModifiedPendulumProcessor(noise_estimator.PendulumProcessor):
             # log_string("anti_diag:" + np.array2string(anti_diag, formatter={'float_kind':lambda x: "%.5f" % x}))
             # log_string("sum: " + np.array2string(np.sum(self.C, axis=1), formatter={'float_kind':lambda x: "%.2f" % x}))
 
-            # self.C = self.C * np.identity(self.M)
-            # self.C = init_norm.sum(axis=1, keepdims=1)
+            self.C = self.enforce_symmetry_and_normalization(self.C)
+
+            # # Perform Singular Value Decomposition (SVD)
+            # U, S, VT = np.linalg.svd(self.C, full_matrices=False)
+
+            # # Calculate the pseudoinverse of C
+            # pseudoinverse_C = np.dot(VT.T, np.dot(np.diag(1 / S), U.T)) 
+
+            # self.C = pseudoinverse_C           
 
             if noise_estimator.is_invertible(self.C):
                 # they're pre-multiplying the rewards with the matrix here
+                # self.phi = pseudoinverse_C.dot(self.mmat)
                 self.phi = np.linalg.inv(self.C).dot(self.mmat)
                 self.valid = True
             else: self.valid = False
