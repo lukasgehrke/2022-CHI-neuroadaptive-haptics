@@ -1,10 +1,10 @@
 import noise_estimator
 import numpy as np
-np.random.seed(69)
 import collections
 
 import random
 random.seed(69)
+
 from sklearn.metrics import ConfusionMatrixDisplay
 import matplotlib.pyplot as plt
 
@@ -60,15 +60,6 @@ class ModifiedPendulumProcessor(noise_estimator.PendulumProcessor):
         confusion_matrix = np.around(confusion_matrix, decimals=4)
 
         return confusion_matrix
-
-    # def noisy_reward(self, reward):
-    #     prob_list = list(self.cummat[abs(reward), :])
-    #     n = np.random.random()
-    #     prob_list.append(n)
-    #     j = sorted(prob_list).index(n)
-    #     reward = -1 * j
-
-    #     return reward
 
     def noisy_reward(self, reward):
         prob_list = list(self.cmat[abs(reward), :])

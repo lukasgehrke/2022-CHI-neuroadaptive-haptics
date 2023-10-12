@@ -1,6 +1,5 @@
 import numpy as np
 np.random.seed(69)
-
 class UCBQAgent:
     def __init__(self, params={}):
         # In our case actions == states
@@ -33,6 +32,7 @@ class UCBQAgent:
         # Epsilon-greedy action selection
         if np.random.uniform(0, 1) < self.epsilon:
             # Take a random action
+            # np.random.seed(69)
             action = np.random.choice(self.num_actions)
         else:
             # Calculate the UCB value for each action
@@ -42,6 +42,7 @@ class UCBQAgent:
             # Select action with maximum UCB value
             # Break ties randomly
             idxs_max_values = np.flatnonzero(ucb_values == ucb_values.max())
+            # np.random.seed(69)
             action = np.random.choice(idxs_max_values)
 
         if self.alpha > self.alpha_min:

@@ -1,12 +1,11 @@
-import time
-import random
 import numpy as np
-
+np.random.seed(69)
 class ModifiedRandomEnvironment:
     def __init__(self, correct_action = 6, num_states=10):
         # The total number of feedback levels
         self.num_states = num_states
         # The last feedback level sent
+        # np.random.seed(69)
         self.current_state = np.random.randint(num_states)
         # The "right" level of feedback
         self.correct_action = correct_action

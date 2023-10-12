@@ -1,7 +1,6 @@
 import collections
 import pandas
 import numpy as np
-np.random.seed(69)
 
 from rl.core import Processor
 
