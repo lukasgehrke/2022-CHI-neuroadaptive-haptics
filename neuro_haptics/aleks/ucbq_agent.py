@@ -19,7 +19,7 @@ class UCBQAgent:
         # self.epsilon_decay = lambda t: np.log10(t+1)/params.get('epsilon_decay', 20)
 
         start_q_value = -(self.num_actions - 1)
-        self.Q = np.full((self.num_states, self.num_actions), start_q_value)
+        self.Q = np.full((self.num_states, self.num_actions), float(start_q_value))
 
         # Initialize N-table for action counts
         # Needs to be `one` to avoid div by zero
@@ -60,8 +60,7 @@ class UCBQAgent:
         self.N[state][action] += 1
 
         # TODO: double check if this is correct
-        self.Q[state][action] = (1 - self.alpha) * self.Q[state][action] \
-            + self.alpha * (reward + self.gamma * np.max(self.Q[next_state]))
+        self.Q[state][action] = (1 - self.alpha) * self.Q[state][action] + self.alpha * (reward + self.gamma * np.max(self.Q[next_state]))
 
     def reset(self):
         # Reset Q-table and N-table
