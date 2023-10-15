@@ -172,9 +172,12 @@ def plot_mean_q_values(params={}):
     lines = ax.plot(mean_q_values_across_episodes)
     ax.legend(lines, mean_q_values_across_episodes.columns)
     
-    pd.Series(episode_lengths).value_counts().sort_index().plot.bar(ax=axes[1, 0], title='Episode lengths')
+    ax = plt.subplot(2, 2, 3)
+    ax.hist(episode_lengths, bins=10, edgecolor='black')
+    ax.set_xlabel('Episode Length')
+    ax.set_ylabel('Frequency')    
+
     pd.Series(selected_actions).value_counts().sort_index().plot.bar(ax=axes[1, 1], title='Guessed correct action')
-    # accuracy up until now
     
     plt.tight_layout()
     plt.show()

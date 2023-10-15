@@ -1,13 +1,13 @@
 from ucbq_environment import ModifiedRandomEnvironment
 
 class ModifiedRandomEnvironment(ModifiedRandomEnvironment):
-    def __init__(self, correct_action = 6, params={}):
+    def __init__(self, params={}):
         # The total number of feedback levels
         self.num_states = 1
         # The last feedback level sent
         self.current_state = 0
         # The "right" level of feedback
-        self.correct_action = correct_action        
+        self.correct_action = params.get('correct_action', 1)
         
         self.same_action = None
         self.t = 0

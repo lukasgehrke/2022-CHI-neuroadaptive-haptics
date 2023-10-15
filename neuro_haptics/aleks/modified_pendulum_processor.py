@@ -21,6 +21,7 @@ class ModifiedPendulumProcessor(noise_estimator.PendulumProcessor):
         self.r_sets = {}
         self.weight = weight
         self.surrogate = params.get('surrogate', False)
+        self.stationary_noise = params.get('stationary_noise', True)
 
         self.M = num_unique_rewards
         # self.cmat, _ = noise_estimator.initialize_cmat(noise_type, self.M, self.weight)
@@ -156,23 +157,12 @@ class ModifiedPendulumProcessor(noise_estimator.PendulumProcessor):
             self.r_sets[(state, action)] = [reward]
         self.counter += 1
 
-    # def process_action(self, action):
-    #     # print ("action before:", action)
-    #     n_bins = 20
-    #     action_bins = pandas.cut([-1.0, 1.0], bins=n_bins, retbins=True)[1][1:-1]
-    #     self.action = build_state([to_bin(action, action_bins)])
-    #     # print ("action after:", self.action)
-
-    #     return action
-
     def process_reward_stationary_noise(self, reward, action):
         if not self.surrogate:
             return reward
         
         if not(self.counter >= self.surrogate_c_interval_min and self.counter % self.surrogate_c_interval == 0):
             return reward
-        
-        # self.estimate_C()
 
         state = 0
         reward = np.mean(self.r_sets[(state, action)])
@@ -187,16 +177,14 @@ class ModifiedPendulumProcessor(noise_estimator.PendulumProcessor):
         self.r_sum += reward
         self.r_counter += 1
 
-        # if self.r_counter == 200:
-        #     # log_string(str(self.r_sum / float(self.r_counter)))
-        #     self.r_counter = 0
-        #     self.r_sum = 0
-
         reward = int(np.ceil(reward))
         reward = self.noisy_reward(reward)
         self.collect(state, self.action, reward)
-        # reward = self.process_reward(reward)        
-        reward = self.process_reward_stationary_noise(reward, action)
+
+        if self.stationary_noise:
+            reward = self.process_reward_stationary_noise(reward, action)
+        elif not self.stationary_noise: 
+            reward = self.process_reward(reward)
 
         return observation, reward, done, info
     
