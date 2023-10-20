@@ -45,8 +45,8 @@ def runner(adjust_rewards=None,
     q_values_for_chart = []
     
     t = 0
-    start_action = params.get('start_action', 0)
-    action = start_action
+    # start_action = params.get('start_action', 0)
+    # action = start_action
     state = 0
     max_steps = params.get('max_steps', 120)
     correct_action = params.get('correct_action', 3)
@@ -117,7 +117,8 @@ def runner(adjust_rewards=None,
 
 from tqdm import tqdm 
 
-def qLearningExperiment(learner=None, params={}):
+def qLearningExperiment(params={}):
+    agent = params.get('agent', None)
     plots = params.get('plots', True)
     num_episodes = params.get('num_episodes', 100)
     correct_action = params.get('correct_action', 3)
@@ -129,8 +130,7 @@ def qLearningExperiment(learner=None, params={}):
 
     for i in tqdm(range(num_episodes)):
         # TODO: .reset() instead of re-creating?
-        agent = learner
-        env = ModifiedRandomEnvironment(correct_action=correct_action)
+        env = ModifiedRandomEnvironment(params=params)
         q_values_for_chart, rewards, episode_length, selected_action, reward_processor, _, _ = runner(env=env, agent=agent, params=params)
         selected_actions.append(selected_action)
         episode_lengths.append(episode_length)
