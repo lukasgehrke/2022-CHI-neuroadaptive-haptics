@@ -81,6 +81,19 @@ class ModifiedPendulumProcessor(noise_estimator.PendulumProcessor):
             return self.phi[int(-reward), 0]
         else: return reward
 
+
+    def process_reward_stationary_noise(self, reward, action):
+        if not self.surrogate:
+            return reward
+        
+        if not(self.counter >= self.surrogate_c_interval_min and self.counter % self.surrogate_c_interval == 0):
+            return reward
+
+        state = 0
+        reward = np.mean(self.r_sets[(state, action)])
+
+        return reward        
+
     def enforce_symmetry_and_normalization(self, matrix):
         # Set diagonal to 1 for rows with sum 0
         row_sums = matrix.sum(axis=1)
@@ -156,19 +169,6 @@ class ModifiedPendulumProcessor(noise_estimator.PendulumProcessor):
         else:
             self.r_sets[(state, action)] = [reward]
         self.counter += 1
-
-    def process_reward_stationary_noise(self, reward, action):
-        if not self.surrogate:
-            return reward
-        
-        if not(self.counter >= self.surrogate_c_interval_min and self.counter % self.surrogate_c_interval == 0):
-            return reward
-
-        state = 0
-        reward = np.mean(self.r_sets[(state, action)])
-
-        return reward
-        
 
     def process_step(self, observation, reward, done, info, action):
         state = observation

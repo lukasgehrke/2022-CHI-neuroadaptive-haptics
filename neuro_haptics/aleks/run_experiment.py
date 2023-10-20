@@ -30,6 +30,7 @@ import utils
 parser = argparse.ArgumentParser()
 parser.add_argument("-t", "--TimeOut", help = "Stop script after n seconds")
 args = parser.parse_args()
+timeOut = float(args.TimeOut) if bool(args.TimeOut) else 1.69
 
 def default_params():
     """ These are the default parameters used int eh framework. """
@@ -53,9 +54,8 @@ params = default_params()
 t = 0
 
 num_actions = 7
-agent = UCBQAgent(num_actions=num_actions)
-correct_action = 6
-env = ModifiedRandomEnvironment(correct_action=correct_action)
+agent = UCBQAgent()
+env = ModifiedRandomEnvironment()
 state = 0
 
 # # Surrogate rewards setup
@@ -73,12 +73,10 @@ while True:
     elapsed_time = time.time() - start_time
 
     # Auto shut down scipt 
-    if bool(args.TimeOut) and (elapsed_time > float(args.TimeOut)):
+    if elapsed_time > timeOut:
         break
 
     action = agent.choose_action(state) 
-    # TODO: 
-    # send_action_to_stream
     reward, next_state, done = env.step(action)
     print(f"{round(elapsed_time, 2)} > {action} -> {reward}")
     
