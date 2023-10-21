@@ -62,6 +62,7 @@ class UCBQAgent:
         # TODO: double check if this is correct
         self.Q[state][action] = (1 - self.alpha) * self.Q[state][action] + self.alpha * (reward + self.gamma * np.max(self.Q[next_state]))
 
+
     def reset(self):
         # Reset Q-table and N-table
         self.Q = np.zeros((self.num_states, self.num_actions))

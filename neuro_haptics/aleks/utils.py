@@ -1,3 +1,29 @@
+def default_params():
+    """ These are the default parameters used in the framework. """
+    return {
+            # Runner parameters
+            'max_steps': 120,
+            'num_episodes': 100,
+            'num_actions': 7, 
+            'correct_action': 1,    # Zero indexed 
+            # Optimization parameters
+            'alpha': 0.5,
+            'alpha_decay': 40,
+            'alpha_min': 0.001,
+            # Exploration parameters
+            'epsilon': 1,
+            'epsilon_decay': 20,
+            'epsilon_min': 0.01,    
+            'gamma': 0.95,
+            'plots': False,
+            'noise': True,
+            'surrogate': False,
+            'surrogate_c_interval': 10,
+            'surrogate_c_interval_min': 30,
+           }
+
+# Experiment print methods
+
 import numpy as np
 
 def print_agent_stats(agent):
