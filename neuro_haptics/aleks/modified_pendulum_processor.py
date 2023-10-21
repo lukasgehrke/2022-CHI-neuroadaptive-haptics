@@ -21,7 +21,7 @@ class ModifiedPendulumProcessor(noise_estimator.PendulumProcessor):
         self.r_sets = {}
         self.weight = weight
         self.surrogate = params.get('surrogate', False)
-        self.stationary_noise = params.get('stationary_noise', True)
+        self.stationary_noise = params.get('stationary_noise', False)
 
         self.M = num_unique_rewards
         # self.cmat, _ = noise_estimator.initialize_cmat(noise_type, self.M, self.weight)
@@ -103,9 +103,9 @@ class ModifiedPendulumProcessor(noise_estimator.PendulumProcessor):
         # Ensure symmetry
         matrix = (matrix + matrix.T) / 2
 
-        # # Normalize rows to 1
-        # row_sums = matrix.sum(axis=1)        
-        # matrix = matrix / row_sums[:, np.newaxis]        
+        # Normalize rows to 1
+        row_sums = matrix.sum(axis=1)        
+        matrix = matrix / row_sums[:, np.newaxis]        
 
         return matrix
     

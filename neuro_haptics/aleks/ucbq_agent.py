@@ -19,6 +19,10 @@ class UCBQAgent:
         # self.epsilon_decay = lambda t: np.log10(t+1)/params.get('epsilon_decay', 20)
 
         start_q_value = -(self.num_actions - 1)
+        # Need to set this expilcitly to float, otherwise when we assign the
+        # new value to the Q-table, it will be casted to int
+        # TODO: However, the performance with the casting (rounding) looked better
+        # self.Q = np.full((self.num_states, self.num_actions), start_q_value)
         self.Q = np.full((self.num_states, self.num_actions), float(start_q_value))
 
         # Initialize N-table for action counts
@@ -45,12 +49,12 @@ class UCBQAgent:
             # np.random.seed(69)
             action = np.random.choice(idxs_max_values)
 
-        if self.alpha > self.alpha_min:
-            alpha_decay = lambda t: np.log10(t+1)/self.alpha_decay_denumerator
+        alpha_decay = lambda t: np.log10(t+1)/self.alpha_decay_denumerator
+        if self.alpha - alpha_decay(self.t) > self.alpha_min:
             self.alpha -= alpha_decay(self.t)
 
-        if self.epsilon > self.epsilon_min:
-            epsilon_decay = lambda t: np.log10(t+1)/self.epsilon_decay_denumerator
+        epsilon_decay = lambda t: np.log10(t+1)/self.epsilon_decay_denumerator
+        if self.epsilon  - epsilon_decay(self.t) > self.epsilon_min:
             self.epsilon -= epsilon_decay(self.t)
 
         return action

@@ -192,7 +192,7 @@ def plot_mean_q_values(params={}):
         last_reward_processor.print()
 
     fig, axes = plt.subplots(2, 2, figsize=(8, 6))
-    mean_rewards_across_episodes.plot(ax=axes[0, 0], title='Mean reward for this step across all episodes')
+    mean_rewards_across_episodes.plot(ax=axes[0, 0], title='Reward (mean across all episodes)')
     ax = plt.subplot(2, 2, 2)
     ax.set_ylabel('Q-value (mean across all episodes)')
     lines = ax.plot(mean_q_values_across_episodes)
