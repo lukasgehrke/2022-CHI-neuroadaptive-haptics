@@ -23,9 +23,11 @@ import time
 import numpy as np
 
 from ucbq_agent_stateless import UCBQAgent
+from thompson_sampling_agent import ThompsonSamplingAgentTemporaryWrapper
 from ucbq_environment_stateless import ModifiedRandomEnvironment
 from modified_pendulum_processor_noiseless import ModifiedPendulumProcessorNoiseless
 import utils
+from utils import *
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-t", "--TimeOut", help = "Stop script after n seconds")
@@ -33,53 +35,29 @@ args = parser.parse_args()
 timeOut = float(args.TimeOut) if bool(args.TimeOut) else 1.69
 
 # def default_params():
-#     """ These are the default parameters used in the framework. """
+#     """ These are the default parameters used int eh framework. """
 #     return {
-#             # Runner parameters
-#             'max_steps': 120,
-#             'num_episodes': 100,
-#             'num_actions': 7, 
-#             'start_action': 0, 
-#             'correct_action': 1,    # Zero indexed 
+#             # # Runner parameters
+#             # 'max_episodes': int(1E6),         # experiment stops after this many episodes
+#             # 'max_steps': int(1E9),            # experiment stops after this many steps
+#             # 'multi_runner': False,            # uses multiple runners if True
+#             # # Exploration parameters
+#             # 'epsilon_anneal_time': int(5E3),  # exploration anneals epsilon over these many steps
+#             # 'epsilon_finish': 0.1,            # annealing stops at (and keeps) this epsilon
+#             # 'epsilon_start': 1,               # annealing starts at this epsilon
+#             'epsilon': 1,               # annealing starts at this epsilon
+#             'epsilon_decay': 0.5,
 #             # Optimization parameters
-#             'alpha': 0.5,
-#             'alpha_decay': 40,
-#             'alpha_min': 0.001,
-#             # Exploration parameters
-#             'epsilon': 1,
-#             'epsilon_decay': 20,
-#             'epsilon_min': 0.01,    
-#             'gamma': 0.95,
-#             'plots': False,
-#             'noise': True,
-#             'surrogate': False,
-#             'surrogate_c_interval': 10,
-#             'surrogate_c_interval_min': 30,
+#             'alpha': 0.5,                       # learning rate of optimizer
+#             # 'gamma': 0.99,                    # discount factor gamma
 #            }
-
-def default_params():
-    """ These are the default parameters used int eh framework. """
-    return {
-            # # Runner parameters
-            # 'max_episodes': int(1E6),         # experiment stops after this many episodes
-            # 'max_steps': int(1E9),            # experiment stops after this many steps
-            # 'multi_runner': False,            # uses multiple runners if True
-            # # Exploration parameters
-            # 'epsilon_anneal_time': int(5E3),  # exploration anneals epsilon over these many steps
-            # 'epsilon_finish': 0.1,            # annealing stops at (and keeps) this epsilon
-            # 'epsilon_start': 1,               # annealing starts at this epsilon
-            'epsilon': 1,               # annealing starts at this epsilon
-            'epsilon_decay': 0.5,
-            # Optimization parameters
-            'alpha': 0.5,                       # learning rate of optimizer
-            # 'gamma': 0.99,                    # discount factor gamma
-           }
 
 params = default_params()
 t = 0
 
 num_actions = 7
-agent = UCBQAgent()
+# agent = UCBQAgent()
+agent = ThompsonSamplingAgentTemporaryWrapper()
 env = ModifiedRandomEnvironment()
 state = 0
 

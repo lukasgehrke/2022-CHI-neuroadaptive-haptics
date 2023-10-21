@@ -104,6 +104,7 @@ class ModifiedPendulumProcessor(noise_estimator.PendulumProcessor):
         matrix = (matrix + matrix.T) / 2
 
         # Normalize rows to 1
+        # This affects accuracy in a major way
         row_sums = matrix.sum(axis=1)        
         matrix = matrix / row_sums[:, np.newaxis]        
 
