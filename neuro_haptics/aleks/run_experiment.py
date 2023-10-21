@@ -57,7 +57,12 @@ t = 0
 
 num_actions = 7
 # agent = UCBQAgent()
+# TODO: explore this
+# Episode rewards: -1729
+# agent = UCBQAgent(params=optimized_params)
+# Episode rewards: -35802
 agent = ThompsonSamplingAgentTemporaryWrapper()
+# Episode rewards: -33
 env = ModifiedRandomEnvironment()
 state = 0
 

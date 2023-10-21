@@ -22,6 +22,8 @@ def default_params():
             'surrogate_c_interval_min': 30,
            }
 
+optimized_params = {'alpha': 0.19008773103975352, 'alpha_decay': 348.142389538547, 'alpha_min': 0.9826884932389596, 'epsilon': 0.28921143036114305, 'epsilon_decay': 445.3413704431987, 'epsilon_min': 0.4278782749167904, 'gamma': 0.9096496016555845, 'surrogate_c_interval': 50.65927148168811, 'surrogate_c_interval_min': 67.48408958504444}
+
 # Experiment print methods
 
 import numpy as np
