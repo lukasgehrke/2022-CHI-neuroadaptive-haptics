@@ -5,7 +5,7 @@ import numpy as np
 
 import matplotlib.pyplot as plt
 
-fname = 'example_data/EMS1.xdf'
+fname = 'example_data/fastReach_s16_Baseline.xdf'
 eeg_stream_name = 'BrainVision RDA'
 eye_stream_name = ''
 marker_stream_name = 'fastReach'
@@ -41,7 +41,7 @@ for stream in data:
                                  stream['info']['channel_format'][0], stream['info']['uid'][0])
         marker_outlet = StreamOutlet(stream_info)
 
-print('Now transmitting data...');
+print('Now transmitting data...')
 
 eye_i = 0
 eye_exists = 'eye_time_stamps' in locals() or 'eye_time_stamps' in globals()
@@ -57,14 +57,15 @@ while True:
         eye_outlet.push_sample(eye_data[eye_i,:])
         eye_i += 1
     
-    if eeg_time_stamps[i] > marker_time_stamps[marker_i]:
-        marker_outlet.push_sample(marker_data[marker_i,:])
+    if not marker_i > len(marker_time_stamps) and eeg_time_stamps[i] > marker_time_stamps[marker_i]:
+        print(marker_data[marker_i][0])
+        marker_outlet.push_sample(marker_data[marker_i])
         marker_i += 1
 
     time.sleep(sample_interval[i])
 
     i += 1
-    if i > range(len(sample_interval)):
+    if i > len(sample_interval):
         i = 0
         eye_i = 0
         marker_i = 0
