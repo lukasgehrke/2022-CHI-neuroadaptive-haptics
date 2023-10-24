@@ -1,32 +1,20 @@
-import time
-import random
 import numpy as np
-
+# random seed will only give persistent results if you re-import the script
+# and restart the kernel in the notebook
+np.random.seed(69)
 class ModifiedRandomEnvironment:
-    def __init__(self, current_state = 2, num_states=10):
+    def __init__(self, num_states=10, params={}):
         # The total number of feedback levels
         self.num_states = num_states
         # The last feedback level sent
+        # np.random.seed(69)
         self.current_state = np.random.randint(num_states)
         # The "right" level of feedback
-        self.internal_state = 2
+        self.correct_action = params.get('correct_action', 1)
 
     def get_participant_answer(self, action):
-        # TODO: use this code when we'll be listenting to the 
-        # actual stream
-        # 
-        # while True:
-        #   answer = get_response_from_stream()
-        #   if (answer):
-        #     return answer
-        #     break
+        answer = 0 if action == self.correct_action else -abs(self.correct_action - action)
 
-        # Simulation code
-        # Wait random time before giving an answer.
-        # This simulates listening to stream.
-        time.sleep(random.uniform(0.001, 0.002))
-        # The reward is 0 if action matches current state, otherwise -1
-        answer = 0 if action == 2 else -1 
         return answer
 
     def step(self, action):

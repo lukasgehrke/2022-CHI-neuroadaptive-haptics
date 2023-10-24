@@ -1,8 +1,8 @@
 # Run the script with
 # `python run_experiment.py -t 1`
 # This will run a simulation trial, with a total length of 1 seconds.
-# Participant answere will be given every 0.001 to 0.002 seconds.
-# The participant "ture" level of feedback is 2.
+# Participant answers will be given every 0.001 to 0.002 seconds.
+# The participant "true" level of feedback is 6 (correct_action).
 
 # The script will output:
 # - A list of actions taken, in the format: 
@@ -14,23 +14,64 @@
 # - Total timesteps (actions) taken
 # - Total reward obtained
 
-# The agent is rewrded `-1` for guessing the wrong feedback level (not 2),
-# and `0` for guessing correctly
+# The agent is rewarded `-n` for guessing the wrong feedback level,
+# where n = abs(guessed_level - correct_level),
+# with `0` for guessing correctly
 
 import argparse
-from ucbq_agent import UCBQAgent
-from ucbq_environment import ModifiedRandomEnvironment
 import time
 import numpy as np
+
+from ucbq_agent_stateless import UCBQAgent
+from thompson_sampling_agent import ThompsonSamplingAgentTemporaryWrapper
+from ucbq_environment_stateless import ModifiedRandomEnvironment
+from modified_pendulum_processor_noiseless import ModifiedPendulumProcessorNoiseless
+import utils
+from utils import *
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-t", "--TimeOut", help = "Stop script after n seconds")
 args = parser.parse_args()
+timeOut = float(args.TimeOut) if bool(args.TimeOut) else 1.69
 
-num_states = 10
-agent = UCBQAgent(num_states=num_states, num_actions=num_states)
-state = 1
-env = ModifiedRandomEnvironment(current_state = state, num_states=num_states)
+# def default_params():
+#     """ These are the default parameters used int eh framework. """
+#     return {
+#             # # Runner parameters
+#             # 'max_episodes': int(1E6),         # experiment stops after this many episodes
+#             # 'max_steps': int(1E9),            # experiment stops after this many steps
+#             # 'multi_runner': False,            # uses multiple runners if True
+#             # # Exploration parameters
+#             # 'epsilon_anneal_time': int(5E3),  # exploration anneals epsilon over these many steps
+#             # 'epsilon_finish': 0.1,            # annealing stops at (and keeps) this epsilon
+#             # 'epsilon_start': 1,               # annealing starts at this epsilon
+#             'epsilon': 1,               # annealing starts at this epsilon
+#             'epsilon_decay': 0.5,
+#             # Optimization parameters
+#             'alpha': 0.5,                       # learning rate of optimizer
+#             # 'gamma': 0.99,                    # discount factor gamma
+#            }
+
+params = default_params()
+t = 0
+
+num_actions = 7
+# agent = UCBQAgent()
+# TODO: explore this
+# Episode rewards: -1729
+# agent = UCBQAgent(params=optimized_params)
+# Episode rewards: -35802
+agent = ThompsonSamplingAgentTemporaryWrapper()
+# Episode rewards: -33
+env = ModifiedRandomEnvironment()
+state = 0
+
+# # Surrogate rewards setup
+# from modified_pendulum_processor import ModifiedPendulumProcessor
+# post_processor = ModifiedPendulumProcessor(surrogate=True)
+# def adjust_rewards(reward, state, action):    
+#     observation, reward, done, info = post_processor.process_step(state, reward, None, None, action)
+#     return reward
 
 start_time = time.time()
 
@@ -40,24 +81,23 @@ while True:
     elapsed_time = time.time() - start_time
 
     # Auto shut down scipt 
-    if bool(args.TimeOut) and (elapsed_time > float(args.TimeOut)):
+    if elapsed_time > timeOut:
         break
 
     action = agent.choose_action(state) 
-    # TODO: 
-    # send_action_to_stream
-    reward, next_state = env.step(action)
-    
+    reward, next_state, done = env.step(action)
     print(f"{round(elapsed_time, 2)} > {action} -> {reward}")
     
+    # reward = adjust_rewards(reward, state, action)
+    
     agent.learn(state, action, reward, next_state)
-    state = next_state
+    episode_rewards += reward
 
-    episode_rewards += reward   
+    t += 1
+    
 
-print(f'Q-table:')
-print(f'{np.around(agent.Q, decimals=4)}')
-print(f'Number of times action was taken:')
-print(f'{agent.N}')
-print(f'Total timesteps: {sum(sum(agent.N)) - 100}')
+    # if done:
+    #     break
+
+utils.print_agent_stats(agent)
 print(f'Episode rewards: {episode_rewards}')
