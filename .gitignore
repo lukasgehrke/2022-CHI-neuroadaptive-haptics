@@ -8,5 +8,5 @@ main.out
 main.pdf
 main.synctex.gz
 *.pyc
-*.pyc
-.DS_Store
+*.DS_Store
+
