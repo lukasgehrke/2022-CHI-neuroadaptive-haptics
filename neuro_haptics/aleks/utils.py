@@ -5,7 +5,9 @@ def default_params():
             'max_steps': 120,
             'num_episodes': 100,
             'num_actions': 7, 
-            'correct_action': 1,    # Zero indexed 
+            'correct_action': 1,    # Zero indexed
+            'convergence_count_start': 35,
+            'convergence_consecutive_limit': 15,
             # Optimization parameters
             'alpha': 0.5,
             'alpha_decay': 40,
@@ -99,7 +101,7 @@ def runner(adjust_rewards=None,
         q_values_for_chart.append(sum_q_values_across_states)
 
     while True:
-        if t == max_steps - 1:
+        if t == max_steps:
             break
 
         action = agent.choose_action(state)
