@@ -36,9 +36,6 @@ def print_agent_stats(agent):
     print(f'Total timesteps:')
     print(agent.t)
 
-def get_num_unique_rewards(num_actions, correct_action):
-    return max(abs(num_actions - correct_action), abs(correct_action + 1))
-
 def get_mean_across_episodes(arr):
     min_cols = np.amin([len(row) for row in arr])
     truncated_arr = [ x[:min_cols] for x in arr ]
@@ -65,7 +62,7 @@ def runner(adjust_rewards=None,
 
     # TODO: cleaner
     agent = UCBQAgent(params=params) if agent is None else agent(params=params) if callable(agent) else agent
-    env = env if env else ModifiedRandomEnvironment()
+    env = env if env else ModifiedRandomEnvironment(params=params)
 
     episode_rewards = 0
     rewards = []
@@ -78,10 +75,8 @@ def runner(adjust_rewards=None,
     # action = start_action
     state = 0
     max_steps = params.get('max_steps', 120)
-    correct_action = params.get('correct_action', 3)
     plots = params.get('plots', True)
     noise = params.get('noise', False)
-    num_actions = params.get('num_actions', 7)
     surrogate = params.get('surrogate', False)
     surrogate_c_interval = params.get('surrogate_c_interval', 10)
     diag = params.get('diag', 0.5)
@@ -94,8 +89,7 @@ def runner(adjust_rewards=None,
     
     if noise: 
         #TODO: should we keep/carry over the estimated confusion matrix across all episodes?
-        # num_unique_rewards = correct_action + 1
-        num_unique_rewards = get_num_unique_rewards(num_actions, correct_action)
+        num_unique_rewards = env.get_num_unique_rewards()
         reward_processor = ModifiedPendulumProcessor(num_unique_rewards=num_unique_rewards,
                                                      diag=diag,
                                                      params=params)

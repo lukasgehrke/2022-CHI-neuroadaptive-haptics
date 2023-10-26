@@ -9,8 +9,10 @@ class ModifiedRandomEnvironment:
         # The last feedback level sent
         # np.random.seed(69)
         self.current_state = np.random.randint(num_states)
+    
+        self.num_actions = params.get('num_actions', 7)
         # The "right" level of feedback
-        self.correct_action = params.get('correct_action', 1)
+        self.correct_action = params.get('correct_action', 1)        
 
     def get_participant_answer(self, action):
         answer = 0 if action == self.correct_action else -abs(self.correct_action - action)
@@ -23,3 +25,6 @@ class ModifiedRandomEnvironment:
         next_state = action
         self.current_state = next_state
         return reward, next_state
+
+    def get_num_unique_rewards(self):
+        return max(abs(self.num_actions - self.correct_action), abs(self.correct_action + 1))
