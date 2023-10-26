@@ -63,7 +63,8 @@ def runner(adjust_rewards=None,
            env=None,
            params={}):
 
-    agent = UCBQAgent(params=params) if agent is None else agent
+    # TODO: cleaner
+    agent = UCBQAgent(params=params) if agent is None else agent(params=params) if callable(agent) else agent
     env = env if env else ModifiedRandomEnvironment()
 
     episode_rewards = 0
@@ -100,7 +101,7 @@ def runner(adjust_rewards=None,
                                                      params=params)
 
     if plots:
-        sum_q_values_across_states = np.around(np.sum(agent.Q, axis=0), decimals=4)
+        sum_q_values_across_states = np.around(np.ravel(agent.Q), decimals=4)
         q_values_for_chart.append(sum_q_values_across_states)
 
     while True:
@@ -111,7 +112,7 @@ def runner(adjust_rewards=None,
         reward, next_state, done = env.step(action)        
         
         if done:
-            sum_q_values_across_states = np.around(np.sum(agent.Q, axis=0), decimals=4)
+            sum_q_values_across_states = np.around(np.ravel(agent.Q), decimals=4)
             q_values_for_chart.append(sum_q_values_across_states)            
             break     
 
@@ -128,7 +129,7 @@ def runner(adjust_rewards=None,
 
         if plots:
             if t % 10 == 0:
-                sum_q_values_across_states = np.around(np.sum(agent.Q, axis=0), decimals=4)
+                sum_q_values_across_states = np.around(np.ravel(agent.Q), decimals=4)
                 q_values_for_chart.append(sum_q_values_across_states)
       
                 
@@ -138,8 +139,7 @@ def runner(adjust_rewards=None,
     if t == max_steps - 1:
         # If we reached the end of the episode
         # select the action with the highest Q-values as the correct one
-        sum_q_values_across_states = np.sum(agent.Q, axis=0)
-        selected_action = np.argmax(sum_q_values_across_states)
+        selected_action = np.argmax(np.ravel(agent.Q))
 
     return q_values_for_chart, rewards, episode_length, selected_action, reward_processor, alphas, epsilons
 
@@ -175,6 +175,12 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 def plot_mean_q_values(params={}):
+    params_new = {
+        'plots': True,
+        }
+    
+    params = params | params_new    
+
     q_values_all_experiments, rewards_all_experiments, episode_lengths, selected_actions, accuracy, last_reward_processor = qLearningExperiment(params=params)
     print(f'Accuracy: {accuracy}')    
     print(f'Mean episode length: {np.mean(episode_lengths)}')
