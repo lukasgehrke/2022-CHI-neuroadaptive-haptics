@@ -174,6 +174,15 @@ def qLearningExperiment(params={}):
 import matplotlib.pyplot as plt
 import pandas as pd
 
+def get_mean_rewards_across_episodes(rewards_all_experiments):
+    all_mean_rewards = [ get_cumsum_rewards(rewards) for rewards in rewards_all_experiments ]
+
+    all_mean_rewards = pd.DataFrame(all_mean_rewards) # rewards have different lengths
+    # because they terminate earlier sometimes
+    mean_matrix = np.mean(all_mean_rewards, axis=0)
+
+    return mean_matrix    
+
 def plot_mean_q_values(params={}):
     params_new = {
         'plots': True,
@@ -185,13 +194,8 @@ def plot_mean_q_values(params={}):
     print(f'Accuracy: {accuracy}')    
     print(f'Mean episode length: {np.mean(episode_lengths)}')
 
-    all_mean_rewards = [ get_cumsum_rewards(rewards) for rewards in rewards_all_experiments ]
-
-    all_mean_rewards = pd.DataFrame(all_mean_rewards) # rewards have different lengths
-    # because they terminate earlier sometimes
-    mean_matrix = np.mean(all_mean_rewards, axis=0)
+    mean_matrix = get_mean_rewards_across_episodes(rewards_all_experiments)
     mean_rewards_across_episodes = pd.DataFrame(mean_matrix)
-
     mean_matrix = get_mean_across_episodes(q_values_all_experiments)
     mean_q_values_across_episodes = pd.DataFrame(mean_matrix) 
 
@@ -200,7 +204,9 @@ def plot_mean_q_values(params={}):
         last_reward_processor.print()
 
     fig, axes = plt.subplots(2, 2, figsize=(8, 6))
+    
     mean_rewards_across_episodes.plot(ax=axes[0, 0], title='Reward (mean across all episodes)')
+    
     ax = plt.subplot(2, 2, 2)
     ax.set_ylabel('Q-value (mean across all episodes)')
     lines = ax.plot(mean_q_values_across_episodes)

@@ -1,4 +1,5 @@
 import numpy as np
+np.random.seed(69)
 
 class ThompsonSamplingAgent:
     def __init__(self, num_actions, reward_range):
