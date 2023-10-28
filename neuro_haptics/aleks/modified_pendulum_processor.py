@@ -22,6 +22,8 @@ class ModifiedPendulumProcessor(noise_estimator.PendulumProcessor):
         self.weight = weight
         self.surrogate = params.get('surrogate', False)
         self.stationary_noise = params.get('stationary_noise', False)
+        self.smooth = params.get('smooth', False)
+        self.r_smooth = {}
 
         self.M = num_unique_rewards
         # self.cmat, _ = noise_estimator.initialize_cmat(noise_type, self.M, self.weight)
@@ -147,23 +149,30 @@ class ModifiedPendulumProcessor(noise_estimator.PendulumProcessor):
             # log_string("anti_diag:" + np.array2string(anti_diag, formatter={'float_kind':lambda x: "%.5f" % x}))
             # log_string("sum: " + np.array2string(np.sum(self.C, axis=1), formatter={'float_kind':lambda x: "%.2f" % x}))
 
-            self.C = self.enforce_symmetry_and_normalization(self.C)
-
-            # # Perform Singular Value Decomposition (SVD)
-            # U, S, VT = np.linalg.svd(self.C, full_matrices=False)
-
-            # # Calculate the pseudoinverse of C
-            # pseudoinverse_C = np.dot(VT.T, np.dot(np.diag(1 / S), U.T)) 
-
-            # self.C = pseudoinverse_C           
+            self.C = self.enforce_symmetry_and_normalization(self.C)    
 
             if noise_estimator.is_invertible(self.C):
                 # they're pre-multiplying the rewards with the matrix here
                 # self.phi = pseudoinverse_C.dot(self.mmat)
                 self.phi = np.linalg.inv(self.C).dot(self.mmat)
                 self.valid = True
-            else: self.valid = False           
+            else: self.valid = False   
 
+    def smooth_reward(self, state, action, reward):
+        smooth_window = 5
+        # variance reduction technique (VRT)
+        if (state, action) in self.r_smooth:
+            if len(self.r_smooth[(state, action)]) >= smooth_window:
+                self.r_smooth[(state, action)].pop(0)
+                self.r_smooth[(state, action)].append(reward)
+                return sum(self.r_smooth[(state, action)]) / float(len(self.r_smooth[(state, action)]))
+            else:
+                self.r_smooth[(state, action)].append(reward)
+        else:
+            self.r_smooth[(state, action)] = [reward]
+
+        return reward
+    
     def collect(self, state, action, reward):
         if (state, action) in self.r_sets:
             self.r_sets[(state, action)].append(reward)
@@ -186,6 +195,9 @@ class ModifiedPendulumProcessor(noise_estimator.PendulumProcessor):
             reward = self.process_reward_stationary_noise(reward, action)
         elif not self.stationary_noise: 
             reward = self.process_reward(reward)
+
+        if self.smooth:
+            reward = self.smooth_reward(0, self.action, reward)            
 
         return observation, reward, done, info
     
