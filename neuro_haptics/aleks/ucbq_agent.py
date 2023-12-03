@@ -17,6 +17,7 @@ class UCBQAgent:
         self.epsilon_decay_denumerator = params.get('epsilon_decay', 20)
         self.epsilon_min = params.get('epsilon_min', 0.01)        
         # self.epsilon_decay = lambda t: np.log10(t+1)/params.get('epsilon_decay', 20)
+        self.ucb_c = params.get('ucb_c', 2)
 
         start_q_value = -(self.num_actions - 1)
         # Need to set this expilcitly to float, otherwise when we assign the
@@ -41,7 +42,7 @@ class UCBQAgent:
         else:
             # Calculate the UCB value for each action
             # TODO: in the original paper there was no `2` but they had a `c`
-            ucb_values = self.Q[state] + np.sqrt((2 * np.log(self.t)) / self.N[state])
+            ucb_values = self.Q[state] + self.ucb_c * np.sqrt(np.log(self.t) / self.N[state])
 
             # Select action with maximum UCB value
             # Break ties randomly
