@@ -7,6 +7,5 @@ main.log
 main.out
 main.pdf
 main.synctex.gz
-*.pyc
 *.DS_Store
-
+*.pyc
