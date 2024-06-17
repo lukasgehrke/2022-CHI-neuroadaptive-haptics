@@ -1,4 +1,4 @@
-from ucbq_environment import ModifiedRandomEnvironment
+from rl.ucbq_environment import ModifiedRandomEnvironment
 
 class ModifiedRandomEnvironment(ModifiedRandomEnvironment):
     def __init__(self, params={}):

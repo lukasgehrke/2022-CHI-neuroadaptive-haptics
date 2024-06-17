@@ -1,4 +1,4 @@
-import noise_estimator
+import rl.noise_estimator as noise_estimator
 import numpy as np
 import collections
 

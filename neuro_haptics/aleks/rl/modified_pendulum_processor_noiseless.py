@@ -1,5 +1,5 @@
-import modified_pendulum_processor
-import noise_estimator
+import rl.modified_pendulum_processor as modified_pendulum_processor
+import rl.noise_estimator as noise_estimator
 import numpy as np
 import collections
 

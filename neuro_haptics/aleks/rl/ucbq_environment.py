@@ -11,10 +11,19 @@ class ModifiedRandomEnvironment:
         self.current_state = np.random.randint(num_states)
     
         self.num_actions = params.get('num_actions', 7)
+        # TODO:
+        # LSL here
+        # this should be removed, the "correct_action" is now in the
+        # participant's head
         # The "right" level of feedback
         self.correct_action = params.get('correct_action', 1)        
 
     def get_participant_answer(self, action):
+        # TODO
+        # LSL here
+        # We send the predicted `feedback` (action) to the participant and
+        # wait for the participant to answer to "How off was the feedback?"
+        # and assig it to the variable `answer`
         answer = 0 if action == self.correct_action else -abs(self.correct_action - action)
 
         return answer

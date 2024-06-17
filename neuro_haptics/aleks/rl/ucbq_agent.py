@@ -1,7 +1,21 @@
 import numpy as np
+import logging
+import json
+import logging
+
 np.random.seed(69)
+
 class UCBQAgent:
     def __init__(self, params={}):
+        headers = "timestamp, t, action, reward, new_Q_value, alpha, epsilon"
+        with open('log.csv', 'w') as f:
+            f.write(headers + '\n')
+        logging.basicConfig(filename='log.csv',
+                            level=logging.INFO, 
+                            format='%(asctime)s, %(message)s',
+                            datefmt='%Y-%m-%d %H:%M:%S')       
+
+
         # In our case actions == states
         self.num_states = params.get('num_states', 7)
         self.num_actions = params.get('num_actions', 7)
@@ -66,6 +80,8 @@ class UCBQAgent:
 
         # TODO: double check if this is correct
         self.Q[state][action] = (1 - self.alpha) * self.Q[state][action] + self.alpha * (reward + self.gamma * np.max(self.Q[next_state]))
+        
+        logging.info(f'{self.t}, {action}, {reward}, {self.Q[state][action]}, {self.alpha}, {self.epsilon}')
 
 
     def reset(self):
