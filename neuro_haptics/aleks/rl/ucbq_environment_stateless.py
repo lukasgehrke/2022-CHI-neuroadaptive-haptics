@@ -18,7 +18,7 @@ class ModifiedRandomEnvironment(ModifiedRandomEnvironment):
     def step(self, action):
         self.t += 1
 
-        reward = self.get_participant_answer(action)
+        reward = self.send_feedback_to_participant_and_get_participant_answer(action)
         # TODO: delete
         # Our case action == state, but migth consider this separation in the future
         next_state = 0

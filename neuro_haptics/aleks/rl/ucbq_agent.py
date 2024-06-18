@@ -3,13 +3,15 @@ import logging
 import json
 import logging
 import datetime
+from collections import Counter
+
 
 np.random.seed(69)
 
 class UCBQAgent:
     def __init__(self, params={}):
         current_datetime = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        log_filename = f'neuro_haptics/aleks/log-{current_datetime}.csv'
+        log_filename = f'neuro_haptics/aleks/logs/log-{current_datetime}.csv'
 
         logging.basicConfig(filename=log_filename,
                             level=logging.INFO, 
@@ -47,8 +49,11 @@ class UCBQAgent:
 
         # Initialize N-table for action counts
         # Needs to be `one` to avoid div by zero
-        self.N = np.ones((self.num_states, self.num_actions))
+        self.N = np.ones((self.num_states, self.num_actions), dtype=int)
         self.t = 0
+
+        possible_actions = range(0, self.num_actions, 1)
+        self.rewards = {action: [] for action in possible_actions}
 
     def choose_action(self, state):
         self.t += 1
@@ -83,7 +88,12 @@ class UCBQAgent:
         # Update N-table for action counts
         self.N[state][action] += 1
 
-        # TODO: double check if this is correct
+        # Update reward list
+        self.rewards[action].append(reward)
+
+        # Adjust reward
+        reward, _ = Counter(self.rewards[action]).most_common(1)[0]
+
         self.Q[state][action] = (1 - self.alpha) * self.Q[state][action] + self.alpha * (reward + self.gamma * np.max(self.Q[next_state]))
         
         logging.info(f'{self.t}, {action}, {reward}, {self.Q[state][action]}, {self.alpha}, {self.epsilon}')
