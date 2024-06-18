@@ -24,6 +24,7 @@ class ModifiedRandomEnvironment:
         # We send the predicted `feedback` (action) to the participant and
         # wait for the participant to answer to "How off was the feedback?"
         # and assig it to the variable `answer`
+        
         answer = 0 if action == self.correct_action else -abs(self.correct_action - action)
 
         return answer

@@ -2,18 +2,23 @@ import numpy as np
 import logging
 import json
 import logging
+import datetime
 
 np.random.seed(69)
 
 class UCBQAgent:
     def __init__(self, params={}):
-        headers = "timestamp, t, action, reward, new_Q_value, alpha, epsilon"
-        with open('log.csv', 'w') as f:
-            f.write(headers + '\n')
-        logging.basicConfig(filename='log.csv',
+        current_datetime = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        log_filename = f'neuro_haptics/aleks/log-{current_datetime}.csv'
+
+        logging.basicConfig(filename=log_filename,
                             level=logging.INFO, 
                             format='%(asctime)s, %(message)s',
-                            datefmt='%Y-%m-%d %H:%M:%S')       
+                            datefmt='%Y-%m-%d %H:%M:%S')
+        
+        headers = "timestamp, t, action, reward, new_Q_value, alpha, epsilon"
+        with open('log.csv', 'w') as f:
+            f.write(headers + '\n')   
 
 
         # In our case actions == states

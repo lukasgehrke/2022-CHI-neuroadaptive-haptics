@@ -90,5 +90,7 @@ while True:
     # if done:
     #     break
 
+# TODO
+# convert number of times to int
 utils.print_agent_stats(agent)
 print(f'Episode rewards: {episode_rewards}')
