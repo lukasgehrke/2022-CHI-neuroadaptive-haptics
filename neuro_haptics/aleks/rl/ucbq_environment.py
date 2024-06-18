@@ -18,7 +18,7 @@ class ModifiedRandomEnvironment:
         # The "right" level of feedback
         self.correct_action = params.get('correct_action', 1)        
 
-    def get_participant_answer(self, action):
+    def send_feedback_to_participant_and_get_participant_answer(self, action):
         # TODO
         # LSL here
         # We send the predicted `feedback` (action) to the participant and
@@ -27,10 +27,15 @@ class ModifiedRandomEnvironment:
         
         answer = 0 if action == self.correct_action else -abs(self.correct_action - action)
 
+        # Simulate noise
+        if np.random.rand() < 0.3:
+            answer += np.random.choice([-1, 1])
+        answer = np.clip(answer, -6, 0)
+
         return answer
 
     def step(self, action):
-        reward = self.get_participant_answer(action)
+        reward = self.send_feedback_to_participant_and_get_participant_answer(action)
         # Our case action == state, but migth consdier this separation in the future
         next_state = action
         self.current_state = next_state

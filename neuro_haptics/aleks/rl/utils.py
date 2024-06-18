@@ -31,6 +31,8 @@ optimized_params = {'alpha': 0.19008773103975352, 'alpha_decay': 348.14238953854
 import numpy as np
 
 def print_agent_stats(agent):
+    print('Total rewards:')
+    print(sum(sum(agent.rewards.values(), [])))
     print(f'Q-table:')
     print(f'{np.around(agent.Q, decimals=4)}')
     print(f'Number of times action was taken:')
