@@ -1,5 +1,5 @@
-import modified_pendulum_processor
-import noise_estimator
+import rl.modified_pendulum_processor as modified_pendulum_processor
+import rl.noise_estimator as noise_estimator
 import numpy as np
 import collections
 
@@ -10,6 +10,7 @@ class ModifiedPendulumProcessorNoiseless(modified_pendulum_processor.ModifiedPen
     def __init__(self):
         super().__init__(weight=0.2, surrogate=True, noise_type="anti_iden", epsilon=1e-6)
 
+    #TODO: this has been modified in the main method, adapt it here
     def process_step(self, observation, reward, done, info, action):
         state = observation
         self.action = action

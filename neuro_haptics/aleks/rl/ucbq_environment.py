@@ -9,10 +9,22 @@ class ModifiedRandomEnvironment:
         # The last feedback level sent
         # np.random.seed(69)
         self.current_state = np.random.randint(num_states)
+    
+        self.num_actions = params.get('num_actions', 7)
+        # TODO:
+        # LSL here
+        # this should be removed, the "correct_action" is now in the
+        # participant's head
         # The "right" level of feedback
-        self.correct_action = params.get('correct_action', 1)
+        self.correct_action = params.get('correct_action', 1)        
 
     def get_participant_answer(self, action):
+        # TODO
+        # LSL here
+        # We send the predicted `feedback` (action) to the participant and
+        # wait for the participant to answer to "How off was the feedback?"
+        # and assig it to the variable `answer`
+        
         answer = 0 if action == self.correct_action else -abs(self.correct_action - action)
 
         return answer
@@ -23,3 +35,6 @@ class ModifiedRandomEnvironment:
         next_state = action
         self.current_state = next_state
         return reward, next_state
+
+    def get_num_unique_rewards(self):
+        return max(abs(self.num_actions - self.correct_action), abs(self.correct_action + 1))

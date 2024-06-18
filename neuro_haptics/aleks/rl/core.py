@@ -3,15 +3,15 @@ import warnings
 from copy import deepcopy
 
 import numpy as np
-from keras.callbacks import History
+# from keras.callbacks import History
 
-from rl.callbacks import (
-    CallbackList,
-    TestLogger,
-    TrainEpisodeLogger,
-    TrainIntervalLogger,
-    Visualizer
-)
+# from rl.callbacks import (
+#     CallbackList,
+#     TestLogger,
+#     TrainEpisodeLogger,
+#     TrainIntervalLogger,
+#     Visualizer
+# )
 
 
 class Agent(object):

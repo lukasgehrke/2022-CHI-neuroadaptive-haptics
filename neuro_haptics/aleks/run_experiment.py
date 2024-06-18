@@ -1,69 +1,57 @@
+# This script runs the learning loop. It is responsible for:
+# 1. instantiatiating the agent, which sends the first action (feedback)
+# 2. instantiating the environment, which sends the action (feedback) to the participant, and receies the rewards (answers) from the participant
+# 3. and then sending these rewards to the agent.
+
+# This script currently simulates the participant answer
 # Run the script with
 # `python run_experiment.py -t 1`
 # This will run a simulation trial, with a total length of 1 seconds.
-# Participant answers will be given every 0.001 to 0.002 seconds.
-# The participant "true" level of feedback is 6 (correct_action).
-
-# The script will output:
-# - A list of actions taken, in the format: 
-# `elapsed_time > action_taken -> reward_received`
-# - The Q-table at the end of the trial,
-# with rows representing states and columns representing acions
-# - The total count of given actions taken in a given state, 
-# with rows representing states and columns representing acions
-# - Total timesteps (actions) taken
-# - Total reward obtained
 
 # The agent is rewarded `-n` for guessing the wrong feedback level,
 # where n = abs(guessed_level - correct_level),
 # with `0` for guessing correctly
 
+# The script will output:
+# - A list of actions taken, in the format: 
+# `step: curernt_step, time: elapsed_time > action_taken -> reward_received`
+# - The Q-table at the end of the trial
+# - The total count of given actions taken
+# - Total reward obtained (lower is better)
+
+
 import argparse
 import time
 import numpy as np
 
-from ucbq_agent_stateless import UCBQAgent
-from thompson_sampling_agent import ThompsonSamplingAgentTemporaryWrapper
-from ucbq_environment_stateless import ModifiedRandomEnvironment
-from modified_pendulum_processor_noiseless import ModifiedPendulumProcessorNoiseless
-import utils
-from utils import *
+from rl.ucbq_agent_stateless import UCBQAgent
+from rl.thompson_sampling_agent import ThompsonSamplingAgentTemporaryWrapper
+
+from rl.ucbq_environment_stateless import ModifiedRandomEnvironment
+from rl.modified_pendulum_processor_noiseless import ModifiedPendulumProcessorNoiseless
+import rl.utils as utils
+from rl.utils import *
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-t", "--TimeOut", help = "Stop script after n seconds")
 args = parser.parse_args()
-timeOut = float(args.TimeOut) if bool(args.TimeOut) else 1.69
-
-# def default_params():
-#     """ These are the default parameters used int eh framework. """
-#     return {
-#             # # Runner parameters
-#             # 'max_episodes': int(1E6),         # experiment stops after this many episodes
-#             # 'max_steps': int(1E9),            # experiment stops after this many steps
-#             # 'multi_runner': False,            # uses multiple runners if True
-#             # # Exploration parameters
-#             # 'epsilon_anneal_time': int(5E3),  # exploration anneals epsilon over these many steps
-#             # 'epsilon_finish': 0.1,            # annealing stops at (and keeps) this epsilon
-#             # 'epsilon_start': 1,               # annealing starts at this epsilon
-#             'epsilon': 1,               # annealing starts at this epsilon
-#             'epsilon_decay': 0.5,
-#             # Optimization parameters
-#             'alpha': 0.5,                       # learning rate of optimizer
-#             # 'gamma': 0.99,                    # discount factor gamma
-#            }
+# timeOut = float(args.TimeOut) if bool(args.TimeOut) else 1.69
+timeOut = None
+max_steps = 120
 
 params = default_params()
-t = 0
 
 num_actions = 7
-# agent = UCBQAgent()
+agent = UCBQAgent()
 # TODO: explore this
 # Episode rewards: -1729
 # agent = UCBQAgent(params=optimized_params)
 # Episode rewards: -35802
-agent = ThompsonSamplingAgentTemporaryWrapper()
+# agent = ThompsonSamplingAgentTemporaryWrapper()
 # Episode rewards: -33
+
 env = ModifiedRandomEnvironment()
+# State is fixed to 0
 state = 0
 
 # # Surrogate rewards setup
@@ -73,20 +61,23 @@ state = 0
 #     observation, reward, done, info = post_processor.process_step(state, reward, None, None, action)
 #     return reward
 
+t = 0
 start_time = time.time()
-
 episode_rewards = 0
 
 while True:
+    if t > max_steps:
+        break
+
     elapsed_time = time.time() - start_time
 
     # Auto shut down scipt 
-    if elapsed_time > timeOut:
+    if timeOut and elapsed_time > timeOut:
         break
 
     action = agent.choose_action(state) 
     reward, next_state, done = env.step(action)
-    print(f"{round(elapsed_time, 2)} > {action} -> {reward}")
+    print(f"step: {t}, time: {round(elapsed_time, 2)} > {action} -> {reward}")
     
     # reward = adjust_rewards(reward, state, action)
     
@@ -99,5 +90,7 @@ while True:
     # if done:
     #     break
 
+# TODO
+# convert number of times to int
 utils.print_agent_stats(agent)
 print(f'Episode rewards: {episode_rewards}')

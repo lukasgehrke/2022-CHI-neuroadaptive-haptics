@@ -1,7 +1,26 @@
 import numpy as np
+import logging
+import json
+import logging
+import datetime
+
 np.random.seed(69)
+
 class UCBQAgent:
     def __init__(self, params={}):
+        current_datetime = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        log_filename = f'neuro_haptics/aleks/log-{current_datetime}.csv'
+
+        logging.basicConfig(filename=log_filename,
+                            level=logging.INFO, 
+                            format='%(asctime)s, %(message)s',
+                            datefmt='%Y-%m-%d %H:%M:%S')
+        
+        headers = "timestamp, t, action, reward, new_Q_value, alpha, epsilon"
+        with open('log.csv', 'w') as f:
+            f.write(headers + '\n')   
+
+
         # In our case actions == states
         self.num_states = params.get('num_states', 7)
         self.num_actions = params.get('num_actions', 7)
@@ -17,6 +36,7 @@ class UCBQAgent:
         self.epsilon_decay_denumerator = params.get('epsilon_decay', 20)
         self.epsilon_min = params.get('epsilon_min', 0.01)        
         # self.epsilon_decay = lambda t: np.log10(t+1)/params.get('epsilon_decay', 20)
+        self.ucb_c = params.get('ucb_c', 2)
 
         start_q_value = -(self.num_actions - 1)
         # Need to set this expilcitly to float, otherwise when we assign the
@@ -41,7 +61,7 @@ class UCBQAgent:
         else:
             # Calculate the UCB value for each action
             # TODO: in the original paper there was no `2` but they had a `c`
-            ucb_values = self.Q[state] + np.sqrt((2 * np.log(self.t)) / self.N[state])
+            ucb_values = self.Q[state] + self.ucb_c * np.sqrt(np.log(self.t) / self.N[state])
 
             # Select action with maximum UCB value
             # Break ties randomly
@@ -65,6 +85,8 @@ class UCBQAgent:
 
         # TODO: double check if this is correct
         self.Q[state][action] = (1 - self.alpha) * self.Q[state][action] + self.alpha * (reward + self.gamma * np.max(self.Q[next_state]))
+        
+        logging.info(f'{self.t}, {action}, {reward}, {self.Q[state][action]}, {self.alpha}, {self.epsilon}')
 
 
     def reset(self):

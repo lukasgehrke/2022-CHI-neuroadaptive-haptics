@@ -5,7 +5,9 @@ def default_params():
             'max_steps': 120,
             'num_episodes': 100,
             'num_actions': 7, 
-            'correct_action': 1,    # Zero indexed 
+            'correct_action': 1,    # Zero indexed
+            'convergence_count_start': 35,
+            'convergence_consecutive_limit': 15,
             # Optimization parameters
             'alpha': 0.5,
             'alpha_decay': 40,
@@ -36,9 +38,6 @@ def print_agent_stats(agent):
     print(f'Total timesteps:')
     print(agent.t)
 
-def get_num_unique_rewards(num_actions, correct_action):
-    return max(abs(num_actions - correct_action), abs(correct_action + 1))
-
 def get_mean_across_episodes(arr):
     min_cols = np.amin([len(row) for row in arr])
     truncated_arr = [ x[:min_cols] for x in arr ]
@@ -54,17 +53,18 @@ def get_cumsum_rewards(rewards):
     return mean_rewards
 
 
-from ucbq_agent_stateless import UCBQAgent
-from ucbq_environment_stateless import ModifiedRandomEnvironment
-from modified_pendulum_processor import ModifiedPendulumProcessor
+from rl.ucbq_agent_stateless import UCBQAgent
+from rl.ucbq_environment_stateless import ModifiedRandomEnvironment
+from rl.modified_pendulum_processor import ModifiedPendulumProcessor
 
 def runner(adjust_rewards=None, 
            agent=None,
            env=None,
            params={}):
 
-    agent = UCBQAgent(params=params) if agent is None else agent
-    env = env if env else ModifiedRandomEnvironment()
+    # TODO: cleaner
+    agent = UCBQAgent(params=params) if agent is None else agent(params=params) if callable(agent) else agent
+    env = env if env else ModifiedRandomEnvironment(params=params)
 
     episode_rewards = 0
     rewards = []
@@ -77,10 +77,8 @@ def runner(adjust_rewards=None,
     # action = start_action
     state = 0
     max_steps = params.get('max_steps', 120)
-    correct_action = params.get('correct_action', 3)
     plots = params.get('plots', True)
     noise = params.get('noise', False)
-    num_actions = params.get('num_actions', 7)
     surrogate = params.get('surrogate', False)
     surrogate_c_interval = params.get('surrogate_c_interval', 10)
     diag = params.get('diag', 0.5)
@@ -93,25 +91,24 @@ def runner(adjust_rewards=None,
     
     if noise: 
         #TODO: should we keep/carry over the estimated confusion matrix across all episodes?
-        # num_unique_rewards = correct_action + 1
-        num_unique_rewards = get_num_unique_rewards(num_actions, correct_action)
+        num_unique_rewards = env.get_num_unique_rewards()
         reward_processor = ModifiedPendulumProcessor(num_unique_rewards=num_unique_rewards,
                                                      diag=diag,
                                                      params=params)
 
     if plots:
-        sum_q_values_across_states = np.around(np.sum(agent.Q, axis=0), decimals=4)
+        sum_q_values_across_states = np.around(np.ravel(agent.Q), decimals=4)
         q_values_for_chart.append(sum_q_values_across_states)
 
     while True:
-        if t == max_steps - 1:
+        if t == max_steps:
             break
 
         action = agent.choose_action(state)
         reward, next_state, done = env.step(action)        
         
         if done:
-            sum_q_values_across_states = np.around(np.sum(agent.Q, axis=0), decimals=4)
+            sum_q_values_across_states = np.around(np.ravel(agent.Q), decimals=4)
             q_values_for_chart.append(sum_q_values_across_states)            
             break     
 
@@ -128,7 +125,7 @@ def runner(adjust_rewards=None,
 
         if plots:
             if t % 10 == 0:
-                sum_q_values_across_states = np.around(np.sum(agent.Q, axis=0), decimals=4)
+                sum_q_values_across_states = np.around(np.ravel(agent.Q), decimals=4)
                 q_values_for_chart.append(sum_q_values_across_states)
       
                 
@@ -138,8 +135,7 @@ def runner(adjust_rewards=None,
     if t == max_steps - 1:
         # If we reached the end of the episode
         # select the action with the highest Q-values as the correct one
-        sum_q_values_across_states = np.sum(agent.Q, axis=0)
-        selected_action = np.argmax(sum_q_values_across_states)
+        selected_action = np.argmax(np.ravel(agent.Q))
 
     return q_values_for_chart, rewards, episode_length, selected_action, reward_processor, alphas, epsilons
 
@@ -174,18 +170,28 @@ def qLearningExperiment(params={}):
 import matplotlib.pyplot as plt
 import pandas as pd
 
-def plot_mean_q_values(params={}):
-    q_values_all_experiments, rewards_all_experiments, episode_lengths, selected_actions, accuracy, last_reward_processor = qLearningExperiment(params=params)
-    print(f'Accuracy: {accuracy}')    
-    print(f'Mean episode length: {np.mean(episode_lengths)}')
-
+def get_mean_rewards_across_episodes(rewards_all_experiments):
     all_mean_rewards = [ get_cumsum_rewards(rewards) for rewards in rewards_all_experiments ]
 
     all_mean_rewards = pd.DataFrame(all_mean_rewards) # rewards have different lengths
     # because they terminate earlier sometimes
     mean_matrix = np.mean(all_mean_rewards, axis=0)
-    mean_rewards_across_episodes = pd.DataFrame(mean_matrix)
 
+    return mean_matrix    
+
+def plot_mean_q_values(params={}):
+    params_new = {
+        'plots': True,
+        }
+    
+    params = params | params_new    
+
+    q_values_all_experiments, rewards_all_experiments, episode_lengths, selected_actions, accuracy, last_reward_processor = qLearningExperiment(params=params)
+    print(f'Accuracy: {accuracy}')    
+    print(f'Mean episode length: {np.mean(episode_lengths)}')
+
+    mean_matrix = get_mean_rewards_across_episodes(rewards_all_experiments)
+    mean_rewards_across_episodes = pd.DataFrame(mean_matrix)
     mean_matrix = get_mean_across_episodes(q_values_all_experiments)
     mean_q_values_across_episodes = pd.DataFrame(mean_matrix) 
 
@@ -194,7 +200,9 @@ def plot_mean_q_values(params={}):
         last_reward_processor.print()
 
     fig, axes = plt.subplots(2, 2, figsize=(8, 6))
+    
     mean_rewards_across_episodes.plot(ax=axes[0, 0], title='Reward (mean across all episodes)')
+    
     ax = plt.subplot(2, 2, 2)
     ax.set_ylabel('Q-value (mean across all episodes)')
     lines = ax.plot(mean_q_values_across_episodes)
