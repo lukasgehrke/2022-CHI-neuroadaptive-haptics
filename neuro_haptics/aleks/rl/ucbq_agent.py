@@ -19,7 +19,7 @@ class UCBQAgent:
                             datefmt='%Y-%m-%d %H:%M:%S')
         
         headers = "timestamp, t, action, reward, new_Q_value, alpha, epsilon"
-        with open('log.csv', 'w') as f:
+        with open(log_filename, 'w') as f:
             f.write(headers + '\n')   
 
 

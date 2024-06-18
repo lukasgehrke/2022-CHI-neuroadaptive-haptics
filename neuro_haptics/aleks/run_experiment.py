@@ -22,13 +22,11 @@
 
 import argparse
 import time
-import numpy as np
 
 from rl.ucbq_agent_stateless import UCBQAgent
 from rl.thompson_sampling_agent import ThompsonSamplingAgentTemporaryWrapper
 
 from rl.ucbq_environment_stateless import ModifiedRandomEnvironment
-from rl.modified_pendulum_processor_noiseless import ModifiedPendulumProcessorNoiseless
 import rl.utils as utils
 from rl.utils import *
 
@@ -40,8 +38,6 @@ timeOut = None
 max_steps = 120
 
 params = default_params()
-
-num_actions = 7
 agent = UCBQAgent()
 # TODO: explore this
 # Episode rewards: -1729
@@ -49,21 +45,12 @@ agent = UCBQAgent()
 # Episode rewards: -35802
 # agent = ThompsonSamplingAgentTemporaryWrapper()
 # Episode rewards: -33
-
 env = ModifiedRandomEnvironment()
+
 # State is fixed to 0
 state = 0
-
-# # Surrogate rewards setup
-# from modified_pendulum_processor import ModifiedPendulumProcessor
-# post_processor = ModifiedPendulumProcessor(surrogate=True)
-# def adjust_rewards(reward, state, action):    
-#     observation, reward, done, info = post_processor.process_step(state, reward, None, None, action)
-#     return reward
-
 t = 0
 start_time = time.time()
-episode_rewards = 0
 
 while True:
     if t > max_steps:
@@ -78,18 +65,12 @@ while True:
     action = agent.choose_action(state) 
     reward, next_state, done = env.step(action)
     print(f"step: {t}, time: {round(elapsed_time, 2)} > {action} -> {reward}")
-    
-    # reward = adjust_rewards(reward, state, action)
-    
+       
     agent.learn(state, action, reward, next_state)
-    episode_rewards += reward
 
     t += 1
     
-
     # if done:
     #     break
 
-# TODO
-# convert number of times to int
 utils.print_agent_stats(agent)
