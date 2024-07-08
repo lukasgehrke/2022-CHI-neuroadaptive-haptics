@@ -55,9 +55,9 @@ def get_cumsum_rewards(rewards):
     return mean_rewards
 
 
-from rl.ucbq_agent_stateless import UCBQAgent
-from rl.ucbq_environment_stateless import ModifiedRandomEnvironment
-from rl.modified_pendulum_processor import ModifiedPendulumProcessor
+from ucbq_agent_stateless import UCBQAgent
+from ucbq_environment_stateless import ModifiedRandomEnvironment
+from modified_pendulum_processor import ModifiedPendulumProcessor
 
 def runner(adjust_rewards=None, 
            agent=None,

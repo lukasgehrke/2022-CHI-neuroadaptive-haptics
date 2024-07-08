@@ -2,7 +2,7 @@ import collections
 import pandas
 import numpy as np
 
-from rl.core import Processor
+from core import Processor
 
 
 def build_state(features):

@@ -11,7 +11,7 @@ np.random.seed(69)
 class UCBQAgent:
     def __init__(self, params={}):
         current_datetime = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        log_filename = f'neuro_haptics/aleks/logs/log-{current_datetime}.csv'
+        log_filename = f'logs/log-{current_datetime}.csv'
 
         logging.basicConfig(filename=log_filename,
                             level=logging.INFO, 
@@ -49,7 +49,9 @@ class UCBQAgent:
 
         # Initialize N-table for action counts
         # Needs to be `one` to avoid div by zero
-        self.N = np.ones((self.num_states, self.num_actions), dtype=int)
+        # self.N = np.ones((self.num_states, self.num_actions), dtype=int)
+        self.N = np.zeros((self.num_states, self.num_actions), dtype=int)
+
         self.t = 0
 
         possible_actions = range(0, self.num_actions, 1)
@@ -66,7 +68,12 @@ class UCBQAgent:
         else:
             # Calculate the UCB value for each action
             # TODO: in the original paper there was no `2` but they had a `c`
-            ucb_values = self.Q[state] + self.ucb_c * np.sqrt(np.log(self.t) / self.N[state])
+            # Assign a high value to encourage exploration of this unvisited state
+            # ucb_values = np.where(self.N[state] == 0, float('inf'), self.Q[state] + self.ucb_c * np.sqrt(np.log(self.t) / self.N[state]))
+
+            ucb_values = np.where(self.N[state] == 0, 
+                                np.inf, 
+                                self.Q[state] + self.ucb_c * np.sqrt(np.divide(np.log(self.t), self.N[state], where=self.N[state]!=0)))
 
             # Select action with maximum UCB value
             # Break ties randomly
