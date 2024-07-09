@@ -27,10 +27,10 @@ class ModifiedRandomEnvironment:
         
         answer = 0 if action == self.correct_action else -abs(self.correct_action - action)
 
-        # Simulate noise
-        if np.random.rand() < 0.3:
-            answer += np.random.choice([-1, 1])
-        answer = np.clip(answer, -6, 0)
+        # # Simulate noise
+        # if np.random.rand() < 0.3:
+        #     answer += np.random.choice([-1, 1])
+        # answer = np.clip(answer, -6, 0)
 
         return answer
 

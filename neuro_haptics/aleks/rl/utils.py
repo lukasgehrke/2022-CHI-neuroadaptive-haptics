@@ -18,7 +18,7 @@ def default_params():
             'epsilon_min': 0.01,    
             'gamma': 0.95,
             'plots': False,
-            'noise': True,
+            'noise': False,
             'surrogate': False,
             'surrogate_c_interval': 10,
             'surrogate_c_interval_min': 30,
