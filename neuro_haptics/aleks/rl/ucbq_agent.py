@@ -40,7 +40,8 @@ class UCBQAgent:
         # self.epsilon_decay = lambda t: np.log10(t+1)/params.get('epsilon_decay', 20)
         self.ucb_c = params.get('ucb_c', 2)
 
-        start_q_value = -(self.num_actions - 1)
+        # start_q_value = -(self.num_actions - 1)
+        start_q_value = 0
         # Need to set this expilcitly to float, otherwise when we assign the
         # new value to the Q-table, it will be casted to int
         # TODO: However, the performance with the casting (rounding) looked better
@@ -99,9 +100,10 @@ class UCBQAgent:
         self.rewards[action].append(reward)
 
         # Adjust reward
-        reward, _ = Counter(self.rewards[action]).most_common(1)[0]
+        # reward, _ = Counter(self.rewards[action]).most_common(1)[0]
 
-        self.Q[state][action] = (1 - self.alpha) * self.Q[state][action] + self.alpha * (reward + self.gamma * np.max(self.Q[next_state]))
+        # self.Q[state][action] = (1 - self.alpha) * self.Q[state][action] + self.alpha * (reward + self.gamma * np.max(self.Q[next_state]))
+        self.Q[state][action] = self.Q[state][action] + (1/self.N[state][action]) * (reward + self.Q[state][action])
         
         logging.info(f'{self.t}, {action}, {reward}, {self.Q[state][action]}, {self.alpha}, {self.epsilon}')
 

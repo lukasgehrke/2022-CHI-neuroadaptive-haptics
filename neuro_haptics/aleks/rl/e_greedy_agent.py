@@ -6,11 +6,13 @@ from ucbq_agent_stateless import UCBQAgent
 class EGreedyAgent(UCBQAgent):
     def __init__(self, params={}):
         super().__init__(params=params)
+        start_q_value = 0
+        self.Q = np.full((self.num_states, self.num_actions), float(start_q_value))        
 
     def choose_action(self, state):
         self.t += 1
 
-        # Begin different om this agent
+        # Begin different for this agent
 
         # Epsilon-greedy action selection
         if np.random.uniform(0, 1) < self.epsilon:
@@ -43,11 +45,11 @@ class EGreedyAgent(UCBQAgent):
         self.rewards[action].append(reward)
 
         # Adjust reward
-        reward, _ = Counter(self.rewards[action]).most_common(1)[0]
+        # reward, _ = Counter(self.rewards[action]).most_common(1)[0]
 
         # self.Q[state][action] = (1 - self.alpha) * self.Q[state][action] + self.alpha * (reward + self.gamma * np.max(self.Q[next_state]))
         # self.Q[state][action] = self.Q[state][action] + self.alpha * (reward + self.Q[state][action])
-        # self.Q[state][action] = self.Q[state][action] + (reward + self.Q[state][action]) / self.N[state][action]
-        self.Q[state][action] = np.sum(self.rewards[action]) / self.N[state][action]
+        self.Q[state][action] = self.Q[state][action] + (1/self.N[state][action]) * (reward + self.Q[state][action])
+        # self.Q[state][action] = np.sum(self.rewards[action]) / self.N[state][action]
         
         # logging.info(f'{self.t}, {action}, {reward}, {self.Q[state][action]}, {self.alpha}, {self.epsilon}')            
