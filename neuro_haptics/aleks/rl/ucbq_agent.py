@@ -104,6 +104,7 @@ class UCBQAgent:
 
         # self.Q[state][action] = (1 - self.alpha) * self.Q[state][action] + self.alpha * (reward + self.gamma * np.max(self.Q[next_state]))
         self.Q[state][action] = self.Q[state][action] + (1/self.N[state][action]) * (reward + self.Q[state][action])
+        # self.Q[state][action] = self.Q[state][action] + self.alpha * (reward + self.Q[state][action])
         
         logging.info(f'{self.t}, {action}, {reward}, {self.Q[state][action]}, {self.alpha}, {self.epsilon}')
 
