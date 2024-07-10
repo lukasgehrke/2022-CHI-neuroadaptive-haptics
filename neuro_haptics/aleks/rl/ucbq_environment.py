@@ -1,7 +1,11 @@
 import numpy as np
+from pylsl import StreamInfo, StreamOutlet, StreamInlet, resolve_stream
+import time
+
 # random seed will only give persistent results if you re-import the script
 # and restart the kernel in the notebook
 np.random.seed(69)
+
 class ModifiedRandomEnvironment:
     def __init__(self, num_states=10, params={}):
         # The total number of feedback levels
@@ -16,21 +20,36 @@ class ModifiedRandomEnvironment:
         # this should be removed, the "correct_action" is now in the
         # participant's head
         # The "right" level of feedback
-        self.correct_action = params.get('correct_action', 1)        
+        self.correct_action = params.get('correct_action', 1)
+        
+        self.ai_feedback_levels = StreamOutlet(StreamInfo('ai_feedback_levels', 'Markers', 1, 0, 'string', 'myuid34234'))
+        time.sleep(1)
+
+        self.labelmaker_labels = StreamInlet(resolve_stream('name', 'LabelMaker_labels')[0])
+        time.sleep(1)
 
     def send_feedback_to_participant_and_get_participant_answer(self, action):
         # TODO
         # LSL here
         # We send the predicted `feedback` (action) to the participant and
         # wait for the participant to answer to "How off was the feedback?"
-        # and assig it to the variable `answer`
+        # and assign it to the variable `answer`
         
-        answer = 0 if action == self.correct_action else -abs(self.correct_action - action)
+        # push action to stream
+        self.ai_feedback_levels.push_sample(str(action))
+        print(f"AI sent feedback: {action}")
+        time.sleep(1)
 
-        # Simulate noise
-        if np.random.rand() < 0.3:
-            answer += np.random.choice([-1, 1])
-        answer = np.clip(answer, -6, 0)
+        # pull answer from stream
+        answer = self.labelmaker_labels.pull_sample()
+
+        # Mock answers
+        # answer = 0 if action == self.correct_action else -abs(self.correct_action - action)
+
+        # # Simulate noise
+        # if np.random.rand() < 0.3:
+        #     answer += np.random.choice([-1, 1])
+        # answer = np.clip(answer, -6, 0)
 
         return answer
 

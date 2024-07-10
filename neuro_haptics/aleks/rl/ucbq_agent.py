@@ -4,6 +4,8 @@ import json
 import logging
 import datetime
 from collections import Counter
+import os
+
 
 
 np.random.seed(69)
@@ -11,7 +13,17 @@ np.random.seed(69)
 class UCBQAgent:
     def __init__(self, params={}):
         current_datetime = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        log_filename = f'logs/log-{current_datetime}.csv'
+        # Get the directory of the current script
+        current_script_dir = os.path.dirname(os.path.abspath(__file__))
+
+        # Construct the path to the logs directory
+        logs_dir = os.path.join(current_script_dir, 'logs')
+
+        # Ensure the logs directory exists
+        os.makedirs(logs_dir, exist_ok=True)
+
+        # Construct the full path for the log file
+        log_filename = os.path.join(logs_dir, f'log-{current_datetime}.csv')
 
         logging.basicConfig(filename=log_filename,
                             level=logging.INFO, 

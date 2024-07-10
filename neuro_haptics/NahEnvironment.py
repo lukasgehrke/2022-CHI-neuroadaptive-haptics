@@ -1,4 +1,4 @@
-from pylsl import StreamInfo, StreamOutlet
+from pylsl import StreamInfo, StreamOutlet, StreamInlet, resolve_stream
 import time, random, json, os
 
 from SimPhysDataStreamer import SimPhysDataStreamer
@@ -36,7 +36,7 @@ class NahEnvironment():
             # eeg = Classifier('BrainVision RDA', 'eeg_classifier', bci_params['classifier_update_rate'], bci_params['data_srate'], model_path_eeg, 
             #     bci_params['target_class'], bci_params['chans'], bci_params['threshold'], bci_params['windows'], bci_params['baseline'],
             #     debug)
-            self.eeg = Classifier('SimPhysDataStream_Lukas', 'eeg_classifier', bci_params['classifier_update_rate'], bci_params['data_srate'], model_path_eeg, 
+            self.eeg = Classifier('SimPhysDataStream_Lukas', 'eeg_classifier', bci_params['classifier_updat e_rate'], bci_params['data_srate'], model_path_eeg, 
                 bci_params['target_class'], bci_params['chans'], bci_params['threshold'], bci_params['windows'], bci_params['baseline'],
                 debug)            
             self.eeg.start()
@@ -48,17 +48,28 @@ class NahEnvironment():
         # resolve event stream
         # self.inlet = StreamInlet(resolve_stream('name', 'Unity_Events')[0])
 
+        self.ai_feedback_levels = StreamInlet(resolve_stream('name', 'ai_feedback_levels')[0])
+        time.sleep(1)
+
+
 if __name__ == "__main__":
-    
-    data_source = input("Real data or simulated data? Enter 'real' or 'simulated': ")
-    environment = input("Enter 'explicit' or 'implicit' for environment to be simulated: ")
-    
+
+    # data_source = input("Real data or simulated data? Enter 'real' or 'simulated': ")
+    # environment = input("Enter 'explicit' or 'implicit' for environment to be simulated: ")
+    environment = 'explicit'
+    data_source = 'simulated'
+
     nah = NahEnvironment(data_source, environment)
     
     while True: # This will be then changed to wait for an experiment marker from the lsl marker stream coming from unity
 
-        # !! This is just here to simulate the questionnaire labels coming from the unity scene
-        if environment == 'explicit' and data_source == 'simulated':
-            rand_label = str(random.randint(1,7))
-            nah.sim_labels.push_sample(rand_label)
-            time.sleep(1)
+        # # !! This is just here to simulate the questionnaire labels coming from the unity scene
+        # if environment == 'explicit' and data_source == 'simulated':
+
+        ai_feedback_level = nah.ai_feedback_levels.pull_sample()
+        print(f'Participant got AI feedack level: {ai_feedback_level[0]}')
+        
+        rand_label = str(random.randint(1,7))
+        nah.sim_labels.push_sample(rand_label)
+        print("Participant sent label: ", rand_label)
+        time.sleep(1)

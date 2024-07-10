@@ -55,9 +55,9 @@ def get_cumsum_rewards(rewards):
     return mean_rewards
 
 
-from ucbq_agent_stateless import UCBQAgent
-from ucbq_environment_stateless import ModifiedRandomEnvironment
-from modified_pendulum_processor import ModifiedPendulumProcessor
+from .ucbq_agent_stateless import UCBQAgent
+from .ucbq_environment_stateless import ModifiedRandomEnvironment
+# from .modified_pendulum_processor import ModifiedPendulumProcessor
 
 def runner(adjust_rewards=None, 
            agent=None,
@@ -87,16 +87,18 @@ def runner(adjust_rewards=None,
     
     reward_processor = None
 
-    # surrogate can only be with noise=True for now
-    if surrogate:
-        noise = True
+    # Disabling noise and surrogate in this place for now
     
-    if noise: 
-        #TODO: should we keep/carry over the estimated confusion matrix across all episodes?
-        num_unique_rewards = env.get_num_unique_rewards()
-        reward_processor = ModifiedPendulumProcessor(num_unique_rewards=num_unique_rewards,
-                                                     diag=diag,
-                                                     params=params)
+    # # surrogate can only be with noise=True for now
+    # if surrogate:
+    #     noise = True
+    
+    # if noise: 
+    #     #TODO: should we keep/carry over the estimated confusion matrix across all episodes?
+    #     num_unique_rewards = env.get_num_unique_rewards()
+    #     reward_processor = ModifiedPendulumProcessor(num_unique_rewards=num_unique_rewards,
+    #                                                  diag=diag,
+    #                                                  params=params)
 
     if plots:
         sum_q_values_across_states = np.around(np.ravel(agent.Q), decimals=4)

@@ -58,13 +58,13 @@ while True:
 
     elapsed_time = time.time() - start_time
 
-    # Auto shut down scipt 
+    # Auto shut down script 
     if timeOut and elapsed_time > timeOut:
         break
 
     action = agent.choose_action(state) 
     reward, next_state, done = env.step(action)
-    print(f"step: {t}, time: {round(elapsed_time, 2)} > {action} -> {reward}")
+    print(f"step: {t}, time: {round(elapsed_time, 2)}, action: {action}, reward {reward}")
        
     agent.learn(state, action, reward, next_state)
 
