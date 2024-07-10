@@ -1,7 +1,7 @@
 import numpy as np
 from collections import Counter
 
-from ucbq_agent_stateless import UCBQAgent
+from ucbq_agent_stateless_validation import UCBQAgent
 
 class PolicyGradientAgent(UCBQAgent):
     def __init__(self, params={}):
