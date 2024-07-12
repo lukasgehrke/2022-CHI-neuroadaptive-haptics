@@ -50,12 +50,6 @@ class ModifiedRandomEnvironment:
         # participant's head
         # The "right" level of feedback
         self.correct_action = params.get('correct_action', 1)
-        
-        self.ai_feedback_levels = StreamOutlet(StreamInfo('ai_feedback_levels', 'Markers', 1, 0, 'string', 'myuid34234'))
-        time.sleep(1)
-
-        self.labelmaker_labels = StreamInlet(resolve_stream('name', 'LabelMaker_labels')[0])
-        time.sleep(1)
 
     def send_feedback_to_participant_and_get_participant_answer(self, action):
         # TODO
@@ -67,16 +61,17 @@ class ModifiedRandomEnvironment:
 
         answer = None
         
-        # Send a random number to the AI stream
-        number = random.randint(0, 100)
-        outlet.push_sample([number])
-        logging.info(f"Sent to Participant: {number}")
+        # Send action to the AI stream
+        outlet.push_sample([action])
+        logging.info(f"Sent to Participant: {action}")
+
+        # time.sleep(2)
 
         # Receive a sample from the Participant stream
-        sample, timestamp = inlet.pull_sample(timeout=2)
-        while sample is None:
-            sample, timestamp = inlet.pull_sample(timeout=2)
-            print("Waiting for response from Participant...")
+        sample, timestamp = inlet.pull_sample(timeout=10)
+        # while sample is None:
+        #     sample, timestamp = inlet.pull_sample(timeout=2)
+        #     print("Waiting for response from Participant...")
         
         logging.info(f"Received from Participant: {sample[0]}")
         answer = int(sample[0])

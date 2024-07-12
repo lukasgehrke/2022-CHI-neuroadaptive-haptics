@@ -20,7 +20,6 @@ class NahEnvironment():
         """
 
         # !! This is just here to simulate the stream coming from the unity scene that sends the questionnaire answers after every trial
-        print(environment, data_source)
         if environment == 'explicit' and data_source == 'simulated':
             self.sim_labels = StreamOutlet(StreamInfo('Explicit_Labels', 'Markers', 1, 0, 'string', 'myuid34234'))
             time.sleep(2)
