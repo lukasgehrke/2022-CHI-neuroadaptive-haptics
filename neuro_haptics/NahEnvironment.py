@@ -1,10 +1,14 @@
 from pylsl import StreamInfo, StreamOutlet, StreamInlet, resolve_byprop
 import time, random, json, os
 import logging
+import numpy as np
 
 from SimPhysDataStreamer import SimPhysDataStreamer
 from Classifier import Classifier
 from LabelMaker import LabelMaker
+
+# Setup logging
+logging.basicConfig(level=logging.INFO)
 
 class NahEnvironment():
 
@@ -16,9 +20,13 @@ class NahEnvironment():
         """
 
         # !! This is just here to simulate the stream coming from the unity scene that sends the questionnaire answers after every trial
+        print(environment, data_source)
         if environment == 'explicit' and data_source == 'simulated':
             self.sim_labels = StreamOutlet(StreamInfo('Explicit_Labels', 'Markers', 1, 0, 'string', 'myuid34234'))
             time.sleep(2)
+        
+            logging.info("Participant stream created.")
+
 
         # init EEG classifiers that predict the label -> blind to whats going on in unity scene
         elif environment == 'implicit':
@@ -58,43 +66,48 @@ if __name__ == "__main__":
     data_source = 'simulated'
 
     nah = NahEnvironment(data_source, environment)
+
+    # # Define the participant stream
+    # info = StreamInfo('ParticipantStream', 'Markers', 1, 0, 'int32', 'participant_stream')
+    # outlet = StreamOutlet(info)
+    # logging.info("Participant stream created.")
+
+    # Resolve the AI stream
+    logging.info("Looking for an AI stream...")
+    streams = None
+    while streams is None:
+        streams = resolve_byprop('name', 'AIStream')
+        if not streams:
+            logging.info("No AI stream found, retrying...")
+            time.sleep(1)
+
+    inlet = StreamInlet(streams[0])
+    logging.info("AI stream found.")    
     
     while True: # This will be then changed to wait for an experiment marker from the lsl marker stream coming from unity
 
         # # !! This is just here to simulate the questionnaire labels coming from the unity scene
         # if environment == 'explicit' and data_source == 'simulated':
 
-        # Setup logging
-        logging.basicConfig(level=logging.INFO)
-
-        # Define the participant stream
-        info = StreamInfo('ParticipantStream', 'Markers', 1, 0, 'int32', 'participant_stream')
-        outlet = StreamOutlet(info)
-        logging.info("Participant stream created.")
-
-        # Resolve the AI stream
-        logging.info("Looking for an AI stream...")
-        streams = None
-        while streams is None:
-            streams = resolve_byprop('name', 'AIStream')
-            if not streams:
-                logging.info("No AI stream found, retrying...")
-                time.sleep(1)
-
-        inlet = StreamInlet(streams[0])
-        logging.info("AI stream found.")
-
         while True:            
             # Receive a sample from the AI stream
-            ai_feedback_level, timestamp = inlet.pull_sample(timeout=2)
-            if ai_feedback_level is not None:
-                logging.info(f"Received from AI: {ai_feedback_level[0]}")
+            sample, timestamp = inlet.pull_sample(timeout=2)
+            if sample is not None:
+                ai_feedback_level = int(sample[0])
+                logging.info(f"Received from AI: {ai_feedback_level}")
 
-                # # Respond with a random number to the Participant stream
-                # response = random.randint(0, 100)
-                # outlet.push_sample([response])
+                # Mock response
+                action = ai_feedback_level
+                correct_action = 1
+                response = 0 if action == correct_action else -abs(correct_action - action)
 
-                response = str(random.randint(0,6))
+                # Simulate noise
+                if np.random.rand() < 0.3:
+                    response += np.random.choice([-1, 1])
+                response = np.clip(response, -6, 0)
+
+                response = [str(response)]
+                
                 nah.sim_labels.push_sample(response)
                        
                 logging.info(f"Sent to AI: {response}")

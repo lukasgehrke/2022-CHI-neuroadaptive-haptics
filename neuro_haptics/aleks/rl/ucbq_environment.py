@@ -76,6 +76,7 @@ class ModifiedRandomEnvironment:
         sample, timestamp = inlet.pull_sample(timeout=2)
         while sample is None:
             sample, timestamp = inlet.pull_sample(timeout=2)
+            print("Waiting for response from Participant...")
         
         logging.info(f"Received from Participant: {sample[0]}")
         answer = int(sample[0])
