@@ -1,5 +1,6 @@
-from pylsl import StreamInfo, StreamOutlet, StreamInlet, resolve_stream
+from pylsl import StreamInfo, StreamOutlet, StreamInlet, resolve_byprop
 import time, random, json, os
+import logging
 
 from SimPhysDataStreamer import SimPhysDataStreamer
 from Classifier import Classifier
@@ -48,9 +49,6 @@ class NahEnvironment():
         # resolve event stream
         # self.inlet = StreamInlet(resolve_stream('name', 'Unity_Events')[0])
 
-        self.ai_feedback_levels = StreamInlet(resolve_stream('name', 'ai_feedback_levels')[0])
-        time.sleep(1)
-
 
 if __name__ == "__main__":
 
@@ -66,10 +64,47 @@ if __name__ == "__main__":
         # # !! This is just here to simulate the questionnaire labels coming from the unity scene
         # if environment == 'explicit' and data_source == 'simulated':
 
-        ai_feedback_level = nah.ai_feedback_levels.pull_sample()
-        print(f'Participant got AI feedack level: {ai_feedback_level[0]}')
+
+
+
+        # ai_feedback_level = nah.ai_stream.pull_sample()
+        # print(f'Participant got AI feedack level: {ai_feedback_level[0]}')
         
-        rand_label = str(random.randint(1,7))
-        nah.sim_labels.push_sample(rand_label)
-        print("Participant sent label: ", rand_label)
-        time.sleep(1)
+        # rand_label = str(random.randint(1,7))
+        # nah.sim_labels.push_sample(rand_label)
+        # print("Participant sent label: ", rand_label)
+        # time.sleep(1)
+
+        # Setup logging
+        logging.basicConfig(level=logging.INFO)
+
+        # Define the participant stream
+        info = StreamInfo('ParticipantStream', 'Markers', 1, 0, 'int32', 'participant_stream')
+        outlet = StreamOutlet(info)
+        logging.info("Participant stream created.")
+
+        # Resolve the AI stream
+        logging.info("Looking for an AI stream...")
+        streams = None
+        while streams is None:
+            streams = resolve_byprop('name', 'AIStream')
+            if not streams:
+                logging.info("No AI stream found, retrying...")
+                time.sleep(1)
+
+        inlet = StreamInlet(streams[0])
+        logging.info("AI stream found.")
+
+        while True:
+            # Receive a sample from the AI stream
+            sample, timestamp = inlet.pull_sample(timeout=2)
+            if sample is not None:
+                logging.info(f"Received from AI: {sample[0]}")
+
+                # Respond with a random number to the Participant stream
+                response = random.randint(0, 100)
+                outlet.push_sample([response])
+                logging.info(f"Sent to AI: {response}")
+
+            # Sleep to simulate time between responses
+            time.sleep(1)        

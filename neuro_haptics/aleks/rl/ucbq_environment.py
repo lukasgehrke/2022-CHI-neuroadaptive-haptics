@@ -1,3 +1,31 @@
+import random
+import time
+import logging
+from pylsl import StreamInlet, StreamOutlet, StreamInfo, resolve_byprop
+
+# Setup logging
+logging.basicConfig(level=logging.INFO)
+
+# Define the AI stream
+info = StreamInfo('AIStream', 'Markers', 1, 0, 'int32', 'ai_stream')
+outlet = StreamOutlet(info)
+logging.info("AI stream created.")
+
+# Delay to ensure Participant stream is ready
+time.sleep(5)
+
+# Resolve the participant stream
+logging.info("Looking for a Participant stream...")
+streams = None
+while streams is None:
+    streams = resolve_byprop('name', 'ParticipantStream')
+    if not streams:
+        logging.info("No Participant stream found, retrying...")
+        time.sleep(1)
+
+inlet = StreamInlet(streams[0])
+logging.info("Participant stream found.")
+
 import numpy as np
 from pylsl import StreamInfo, StreamOutlet, StreamInlet, resolve_stream
 import time
@@ -34,14 +62,32 @@ class ModifiedRandomEnvironment:
         # We send the predicted `feedback` (action) to the participant and
         # wait for the participant to answer to "How off was the feedback?"
         # and assign it to the variable `answer`
-        
-        # push action to stream
-        self.ai_feedback_levels.push_sample(str(action))
-        print(f"AI sent feedback: {action}")
+
+
+        # Send a random number to the AI stream
+        number = random.randint(0, 100)
+        outlet.push_sample([number])
+        logging.info(f"Sent to Participant: {number}")
+
+        # Receive a sample from the Participant stream
+        sample, timestamp = inlet.pull_sample(timeout=2)
+        if sample is not None:
+            logging.info(f"Received from Participant: {sample[0]}")
+
+        answer = sample[0]
+
+        # Sleep to simulate time between responses
         time.sleep(1)
 
-        # pull answer from stream
-        answer = self.labelmaker_labels.pull_sample()
+
+        
+        # # push action to stream
+        # self.ai_feedback_levels.push_sample(str(action))
+        # print(f"AI sent feedback: {action}")
+        # time.sleep(1)
+
+        # # pull answer from stream
+        # answer = self.labelmaker_labels.pull_sample()
 
         # Mock answers
         # answer = 0 if action == self.correct_action else -abs(self.correct_action - action)
@@ -49,7 +95,7 @@ class ModifiedRandomEnvironment:
         # # Simulate noise
         # if np.random.rand() < 0.3:
         #     answer += np.random.choice([-1, 1])
-        # answer = np.clip(answer, -6, 0)
+        # answer = np.clip(answer, -6, 0)        
 
         return answer
 
