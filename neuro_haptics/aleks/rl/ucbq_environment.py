@@ -18,7 +18,8 @@ time.sleep(5)
 logging.info("Looking for a Participant stream...")
 streams = None
 while streams is None:
-    streams = resolve_byprop('name', 'ParticipantStream')
+    # streams = resolve_byprop('name', 'ParticipantStream')
+    streams = resolve_byprop('name', 'LabelMaker_labels')
     if not streams:
         logging.info("No Participant stream found, retrying...")
         time.sleep(1)
@@ -64,6 +65,8 @@ class ModifiedRandomEnvironment:
         # and assign it to the variable `answer`
 
 
+        answer = None
+        
         # Send a random number to the AI stream
         number = random.randint(0, 100)
         outlet.push_sample([number])
@@ -71,15 +74,16 @@ class ModifiedRandomEnvironment:
 
         # Receive a sample from the Participant stream
         sample, timestamp = inlet.pull_sample(timeout=2)
-        if sample is not None:
-            logging.info(f"Received from Participant: {sample[0]}")
-
-        answer = sample[0]
+        while sample is None:
+            sample, timestamp = inlet.pull_sample(timeout=2)
+        
+        logging.info(f"Received from Participant: {sample[0]}")
+        answer = int(sample[0])
 
         # Sleep to simulate time between responses
         time.sleep(1)
 
-
+        return answer
         
         # # push action to stream
         # self.ai_feedback_levels.push_sample(str(action))
@@ -97,7 +101,7 @@ class ModifiedRandomEnvironment:
         #     answer += np.random.choice([-1, 1])
         # answer = np.clip(answer, -6, 0)        
 
-        return answer
+        # return answer
 
     def step(self, action):
         reward = self.send_feedback_to_participant_and_get_participant_answer(action)

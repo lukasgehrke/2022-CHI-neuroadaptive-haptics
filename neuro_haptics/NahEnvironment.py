@@ -64,17 +64,6 @@ if __name__ == "__main__":
         # # !! This is just here to simulate the questionnaire labels coming from the unity scene
         # if environment == 'explicit' and data_source == 'simulated':
 
-
-
-
-        # ai_feedback_level = nah.ai_stream.pull_sample()
-        # print(f'Participant got AI feedack level: {ai_feedback_level[0]}')
-        
-        # rand_label = str(random.randint(1,7))
-        # nah.sim_labels.push_sample(rand_label)
-        # print("Participant sent label: ", rand_label)
-        # time.sleep(1)
-
         # Setup logging
         logging.basicConfig(level=logging.INFO)
 
@@ -95,15 +84,19 @@ if __name__ == "__main__":
         inlet = StreamInlet(streams[0])
         logging.info("AI stream found.")
 
-        while True:
+        while True:            
             # Receive a sample from the AI stream
-            sample, timestamp = inlet.pull_sample(timeout=2)
-            if sample is not None:
-                logging.info(f"Received from AI: {sample[0]}")
+            ai_feedback_level, timestamp = inlet.pull_sample(timeout=2)
+            if ai_feedback_level is not None:
+                logging.info(f"Received from AI: {ai_feedback_level[0]}")
 
-                # Respond with a random number to the Participant stream
-                response = random.randint(0, 100)
-                outlet.push_sample([response])
+                # # Respond with a random number to the Participant stream
+                # response = random.randint(0, 100)
+                # outlet.push_sample([response])
+
+                response = str(random.randint(0,6))
+                nah.sim_labels.push_sample(response)
+                       
                 logging.info(f"Sent to AI: {response}")
 
             # Sleep to simulate time between responses
