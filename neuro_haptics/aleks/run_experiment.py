@@ -24,9 +24,7 @@ import argparse
 import time
 
 from rl.ucbq_agent_stateless import UCBQAgent
-from rl.thompson_sampling_agent import ThompsonSamplingAgentTemporaryWrapper
 
-from rl.ucbq_environment_stateless import ModifiedRandomEnvironment
 import rl.utils as utils
 from rl.utils import *
 
@@ -43,9 +41,15 @@ agent = UCBQAgent()
 # Episode rewards: -1729
 # agent = UCBQAgent(params=optimized_params)
 # Episode rewards: -35802
+
+# from rl.thompson_sampling_agent import ThompsonSamplingAgentTemporaryWrapper
 # agent = ThompsonSamplingAgentTemporaryWrapper()
 # Episode rewards: -33
-env = ModifiedRandomEnvironment()
+
+# from rl.ucbq_environment_stateless import ModifiedRandomEnvironment
+# env = ModifiedRandomEnvironment()
+from rl.ucbq_environment_lsl import UCBQEnvironmentLSL
+env = UCBQEnvironmentLSL()
 
 # State is fixed to 0
 state = 0

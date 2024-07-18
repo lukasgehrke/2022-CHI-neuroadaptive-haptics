@@ -1,35 +1,35 @@
-import random
-import time
-import logging
-from pylsl import StreamInlet, StreamOutlet, StreamInfo, resolve_byprop
+# import random
+# import time
+# import logging
+# from pylsl import StreamInlet, StreamOutlet, StreamInfo, resolve_byprop
 
-# Setup logging
-logging.basicConfig(level=logging.INFO)
+# # Setup logging
+# logging.basicConfig(level=logging.INFO)
 
-# Define the AI stream
-info = StreamInfo('AIStream', 'Markers', 1, 0, 'int32', 'ai_stream')
-outlet = StreamOutlet(info)
-logging.info("AI stream created.")
+# # Define the AI stream
+# info = StreamInfo('AIStream', 'Markers', 1, 0, 'int32', 'ai_stream')
+# outlet = StreamOutlet(info)
+# logging.info("AI stream created.")
 
-# Delay to ensure Participant stream is ready
-time.sleep(5)
+# # Delay to ensure Participant stream is ready
+# time.sleep(5)
 
-# Resolve the participant stream
-logging.info("Looking for a Participant stream...")
-streams = None
-while streams is None:
-    # streams = resolve_byprop('name', 'ParticipantStream')
-    streams = resolve_byprop('name', 'LabelMaker_labels')
-    if not streams:
-        logging.info("No Participant stream found, retrying...")
-        time.sleep(1)
+# # Resolve the participant stream
+# logging.info("Looking for a Participant stream...")
+# streams = None
+# while streams is None:
+#     # streams = resolve_byprop('name', 'ParticipantStream')
+#     streams = resolve_byprop('name', 'LabelMaker_labels')
+#     if not streams:
+#         logging.info("No Participant stream found, retrying...")
+#         time.sleep(1)
 
-inlet = StreamInlet(streams[0])
-logging.info("Participant stream found.")
+# inlet = StreamInlet(streams[0])
+# logging.info("Participant stream found.")
 
 import numpy as np
-from pylsl import StreamInfo, StreamOutlet, StreamInlet, resolve_stream
-import time
+# from pylsl import StreamInfo, StreamOutlet, StreamInlet, resolve_stream
+# import time
 
 # random seed will only give persistent results if you re-import the script
 # and restart the kernel in the notebook
@@ -52,52 +52,15 @@ class ModifiedRandomEnvironment:
         self.correct_action = params.get('correct_action', 1)
 
     def send_feedback_to_participant_and_get_participant_answer(self, action):
-        # TODO
-        # LSL here
-        # We send the predicted `feedback` (action) to the participant and
-        # wait for the participant to answer to "How off was the feedback?"
-        # and assign it to the variable `answer`
+        # Mock answers
+        answer = 0 if action == self.correct_action else -abs(self.correct_action - action)
 
-
-        answer = None
-        
-        # Send action to the AI stream
-        outlet.push_sample([action])
-        logging.info(f"Sent to Participant: {action}")
-
-        # time.sleep(2)
-
-        # Receive a sample from the Participant stream
-        sample, timestamp = inlet.pull_sample(timeout=10)
-        # while sample is None:
-        #     sample, timestamp = inlet.pull_sample(timeout=2)
-        #     print("Waiting for response from Participant...")
-        
-        logging.info(f"Received from Participant: {sample[0]}")
-        answer = int(sample[0])
-
-        # Sleep to simulate time between responses
-        time.sleep(1)
+        # Simulate noise
+        if np.random.rand() < 0.3:
+            answer += np.random.choice([-1, 1])
+        answer = np.clip(answer, -6, 0)        
 
         return answer
-        
-        # # push action to stream
-        # self.ai_feedback_levels.push_sample(str(action))
-        # print(f"AI sent feedback: {action}")
-        # time.sleep(1)
-
-        # # pull answer from stream
-        # answer = self.labelmaker_labels.pull_sample()
-
-        # Mock answers
-        # answer = 0 if action == self.correct_action else -abs(self.correct_action - action)
-
-        # # Simulate noise
-        # if np.random.rand() < 0.3:
-        #     answer += np.random.choice([-1, 1])
-        # answer = np.clip(answer, -6, 0)        
-
-        # return answer
 
     def step(self, action):
         reward = self.send_feedback_to_participant_and_get_participant_answer(action)

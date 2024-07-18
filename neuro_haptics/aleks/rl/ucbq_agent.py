@@ -23,17 +23,27 @@ class UCBQAgent:
         os.makedirs(logs_dir, exist_ok=True)
 
         # Construct the full path for the log file
-        log_filename = os.path.join(logs_dir, f'log-{current_datetime}.csv')
-
-        logging.basicConfig(filename=log_filename,
-                            level=logging.INFO, 
-                            format='%(asctime)s, %(message)s',
-                            datefmt='%Y-%m-%d %H:%M:%S')
+        log_filename = os.path.join(logs_dir, f'log-{current_datetime}.csv')              
         
+        # Create a logger for the agent
+        self.logger = logging.getLogger('agent_logger')
+        self.logger.setLevel(logging.INFO)
+        
+        # Create file handler which logs even debug messages
+        fh = logging.FileHandler(log_filename)
+
         headers = "timestamp, t, action, reward, new_Q_value, alpha, epsilon"
         with open(log_filename, 'w') as f:
-            f.write(headers + '\n')   
+            f.write(headers + '\n')  
 
+        fh.setLevel(logging.INFO)
+        
+        # Create formatter and add it to the handlers
+        formatter = logging.Formatter('%(asctime)s, %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+        fh.setFormatter(formatter)
+        
+        # Add the handlers to the logger
+        self.logger.addHandler(fh)
 
         # In our case actions == states
         self.num_states = params.get('num_states', 7)
@@ -117,7 +127,7 @@ class UCBQAgent:
         self.Q[state][action] = (1 - self.alpha) * self.Q[state][action] + self.alpha * (reward + self.gamma * np.max(self.Q[next_state]))
 
         
-        logging.info(f'{self.t}, {action}, {reward}, {self.Q[state][action]}, {self.alpha}, {self.epsilon}')
+        self.logger.info(f'{self.t}, {action}, {reward}, {self.Q[state][action]}, {self.alpha}, {self.epsilon}')
 
 
     def reset(self):
