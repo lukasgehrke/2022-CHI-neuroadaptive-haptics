@@ -90,10 +90,14 @@ if __name__ == "__main__":
 
         while True:            
             # Receive a sample from the AI stream
-            sample, timestamp = inlet.pull_sample(timeout=2)
-            if sample is not None:
-                ai_feedback_level = int(sample[0])
-                logging.info(f"Received from AI: {ai_feedback_level}")
+            incoming_sample, timestamp = inlet.pull_chunk(timeout=0.0)
+            
+            if incoming_sample is not None and len(incoming_sample) != 0:
+                logging.info(f"Received from AI: {incoming_sample}")
+                
+                
+                # AI stuff
+                ai_feedback_level = int(incoming_sample[0][0])
 
                 # Mock response
                 action = ai_feedback_level
@@ -105,9 +109,9 @@ if __name__ == "__main__":
                     response += np.random.choice([-1, 1])
                 response = np.clip(response, -6, 0)
 
-                response = [str(response)]
                 
-                nah.sim_labels.push_sample(response)
+                response = [str(response)]                
+                nah.sim_labels.push_chunk(response)
                        
                 logging.info(f"Sent to AI: {response}")
 

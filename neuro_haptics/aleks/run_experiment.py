@@ -57,7 +57,7 @@ t = 0
 start_time = time.time()
 
 while True:
-    if t > max_steps:
+    if t == max_steps:
         break
 
     elapsed_time = time.time() - start_time

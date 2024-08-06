@@ -2,7 +2,6 @@ import time
 import logging
 from pylsl import StreamInlet, StreamOutlet, StreamInfo, resolve_byprop
 
-
 from .ucbq_environment_stateless import ModifiedRandomEnvironment
 
 class UCBQEnvironmentLSL(ModifiedRandomEnvironment):
@@ -34,9 +33,6 @@ class UCBQEnvironmentLSL(ModifiedRandomEnvironment):
         self.outlet = StreamOutlet(info)
         self.environment_logger.info("AI stream created.")
 
-        # Delay to ensure Participant stream is ready
-        time.sleep(2)
-
         # Resolve the participant stream
         self.environment_logger.info("Looking for a Participant stream...")
         streams = None
@@ -48,7 +44,10 @@ class UCBQEnvironmentLSL(ModifiedRandomEnvironment):
                 time.sleep(1)
 
         self.inlet = StreamInlet(streams[0])
-        self.environment_logger.info("Participant stream found.")        
+        self.environment_logger.info("Participant stream found.")
+
+        # Delay to ensure Participant stream is ready
+        time.sleep(5)        
         
     def send_feedback_to_participant_and_get_participant_answer(self, action):
         # TODO
@@ -57,43 +56,21 @@ class UCBQEnvironmentLSL(ModifiedRandomEnvironment):
         # wait for the participant to answer to "How off was the feedback?"
         # and assign it to the variable `answer`
 
-
-        answer = None
+        outgoing_sample = [action]
+        self.outlet.push_chunk(outgoing_sample)
+        print(f"Sent to Participant: {outgoing_sample}")
         
-        # Send action to the AI stream
-        self.outlet.push_sample([action])
-        self.environment_logger.info(f"Sent to Participant: {action}")
+        incoming_sample = None
+        timestamp = None
 
-        # time.sleep(2)
+        while incoming_sample is None or len(incoming_sample) == 0:
+            incoming_sample, timestamp = self.inlet.pull_chunk(timeout=0.0)
 
-        # Receive a sample from the Participant stream
-        sample, timestamp = self.inlet.pull_sample(timeout=10)
-        # while sample is None:
-        #     sample, timestamp = inlet.pull_sample(timeout=2)
-        #     print("Waiting for response from Participant...")
-        
-        self.environment_logger.info(f"Received from Participant: {sample[0]}")
-        answer = int(sample[0])
+        print(f"Received from Participant: {incoming_sample} at {timestamp}")
+
+        answer = int(incoming_sample[0][0])
 
         # Sleep to simulate time between responses
         time.sleep(1)
 
         return answer
-        
-        # # push action to stream
-        # self.ai_feedback_levels.push_sample(str(action))
-        # print(f"AI sent feedback: {action}")
-        # time.sleep(1)
-
-        # # pull answer from stream
-        # answer = self.labelmaker_labels.pull_sample()
-
-        # Mock answers
-        # answer = 0 if action == self.correct_action else -abs(self.correct_action - action)
-
-        # # Simulate noise
-        # if np.random.rand() < 0.3:
-        #     answer += np.random.choice([-1, 1])
-        # answer = np.clip(answer, -6, 0)        
-
-        # return answer
