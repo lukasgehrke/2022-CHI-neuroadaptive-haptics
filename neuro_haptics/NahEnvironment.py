@@ -95,10 +95,12 @@ if __name__ == "__main__":
             if incoming_sample is not None and len(incoming_sample) != 0:
                 logging.info(f"Received from AI: {incoming_sample}")
                 
-                
-                # AI stuff
                 ai_feedback_level = int(incoming_sample[0][0])
-
+                
+                
+                # @Lukas: EEG classifier replaces this mock response
+                
+                ### 
                 # Mock response
                 action = ai_feedback_level
                 correct_action = 1
@@ -108,8 +110,9 @@ if __name__ == "__main__":
                 if np.random.rand() < 0.3:
                     response += np.random.choice([-1, 1])
                 response = np.clip(response, -6, 0)
-
+                ###
                 
+
                 response = [str(response)]                
                 nah.sim_labels.push_chunk(response)
                        
