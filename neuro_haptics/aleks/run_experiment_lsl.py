@@ -46,8 +46,10 @@ agent = UCBQAgent()
 # agent = ThompsonSamplingAgentTemporaryWrapper()
 # Episode rewards: -33
 
-from rl.ucbq_environment_stateless import ModifiedRandomEnvironment
-env = ModifiedRandomEnvironment()
+# from rl.ucbq_environment_stateless import ModifiedRandomEnvironment
+# env = ModifiedRandomEnvironment()
+from rl.ucbq_environment_lsl import UCBQEnvironmentLSL
+env = UCBQEnvironmentLSL()
 
 # State is fixed to 0
 state = 0

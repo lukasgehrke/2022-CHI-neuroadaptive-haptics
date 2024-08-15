@@ -8,7 +8,7 @@ import os
 
 
 
-np.random.seed(69)
+# np.random.seed(69)
 
 class UCBQAgent:
     def __init__(self, params={}):
@@ -46,8 +46,8 @@ class UCBQAgent:
         self.logger.addHandler(fh)
 
         # In our case actions == states
-        self.num_states = params.get('num_states', 7)
-        self.num_actions = params.get('num_actions', 7)
+        self.num_states = params.get('num_states', 5)
+        self.num_actions = params.get('num_actions', 5)
         self.alpha = params.get('alpha', 0.5)  # learning rate
         self.alpha_decay_denumerator = params.get('alpha_decay', 40)
         self.alpha_min = params.get('alpha_min', 0.001)
@@ -56,6 +56,8 @@ class UCBQAgent:
         # TODO: Do we need epsilon greedy?
         # Is there any psychological reason why we can't just switch to the
         # next highest level incrementally?
+        self.n_preemptive_exploration_steps = params.get('preemptive_exploration_steps', 
+                                                       self.num_actions*5)
         self.epsilon = params.get('epsilon', 1)  # epsilon for epsilon-greedy action selection
         self.epsilon_decay_denumerator = params.get('epsilon_decay', 20)
         self.epsilon_min = params.get('epsilon_min', 0.01)        
@@ -83,34 +85,41 @@ class UCBQAgent:
     def choose_action(self, state):
         self.t += 1
 
-        # Epsilon-greedy action selection
-        if np.random.uniform(0, 1) < self.epsilon:
-            # Take a random action
-            # np.random.seed(69)
-            action = np.random.choice(self.num_actions)
+        if self.t <= self.n_preemptive_exploration_steps:
+            N_state = self.N[state]
+            # Find least taken actions
+            idxs_min_values = np.flatnonzero(N_state == N_state.min())
+            action = np.random.choice(idxs_min_values)
+
+        # Epsilon-greedy action selection        
         else:
-            # Calculate the UCB value for each action
-            # TODO: in the original paper there was no `2` but they had a `c`
-            # Assign a high value to encourage exploration of this unvisited state
-            # ucb_values = np.where(self.N[state] == 0, float('inf'), self.Q[state] + self.ucb_c * np.sqrt(np.log(self.t) / self.N[state]))
+            if np.random.uniform(0, 1) < self.epsilon:
+                # Take a random action
+                # np.random.seed(69)
+                action = np.random.choice(self.num_actions)
+            else:
+                # Calculate the UCB value for each action
+                # TODO: in the original paper there was no `2` but they had a `c`
+                # Assign a high value to encourage exploration of this unvisited state
+                # ucb_values = np.where(self.N[state] == 0, float('inf'), self.Q[state] + self.ucb_c * np.sqrt(np.log(self.t) / self.N[state]))
 
-            ucb_values = np.where(self.N[state] == 0, 
-                                np.inf, 
-                                self.Q[state] + self.ucb_c * np.sqrt(np.divide(np.log(self.t), self.N[state], where=self.N[state]!=0)))
+                ucb_values = np.where(self.N[state] == 0, 
+                                    np.inf, 
+                                    self.Q[state] + self.ucb_c * np.sqrt(np.divide(np.log(self.t), self.N[state], where=self.N[state]!=0)))
 
-            # Select action with maximum UCB value
-            # Break ties randomly
-            idxs_max_values = np.flatnonzero(ucb_values == ucb_values.max())
-            # np.random.seed(69)
-            action = np.random.choice(idxs_max_values)
+                # Select action with maximum UCB value
+                # Break ties randomly
+                idxs_max_values = np.flatnonzero(ucb_values == ucb_values.max())
+                # np.random.seed(69)
+                action = np.random.choice(idxs_max_values)
+            
+            alpha_decay = lambda t: np.log10(t+1-self.n_preemptive_exploration_steps)/self.alpha_decay_denumerator
+            if self.alpha - alpha_decay(self.t) > self.alpha_min:
+                self.alpha -= alpha_decay(self.t)
 
-        alpha_decay = lambda t: np.log10(t+1)/self.alpha_decay_denumerator
-        if self.alpha - alpha_decay(self.t) > self.alpha_min:
-            self.alpha -= alpha_decay(self.t)
-
-        epsilon_decay = lambda t: np.log10(t+1)/self.epsilon_decay_denumerator
-        if self.epsilon  - epsilon_decay(self.t) > self.epsilon_min:
-            self.epsilon -= epsilon_decay(self.t)
+            epsilon_decay = lambda t: np.log10(t+1-self.n_preemptive_exploration_steps)/self.epsilon_decay_denumerator
+            if self.epsilon  - epsilon_decay(self.t) > self.epsilon_min:
+                self.epsilon -= epsilon_decay(self.t)
 
         return action
 

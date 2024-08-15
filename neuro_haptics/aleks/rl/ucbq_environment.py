@@ -37,13 +37,14 @@ np.random.seed(69)
 
 class ModifiedRandomEnvironment:
     def __init__(self, num_states=10, params={}):
-        # The total number of feedback levels
         self.num_states = num_states
         # The last feedback level sent
         # np.random.seed(69)
         self.current_state = np.random.randint(num_states)
-    
-        self.num_actions = params.get('num_actions', 7)
+        
+        # The total number of feedback levels        
+        self.num_actions = params.get('num_actions', 5)
+
         # TODO:
         # LSL here
         # this should be removed, the "correct_action" is now in the
