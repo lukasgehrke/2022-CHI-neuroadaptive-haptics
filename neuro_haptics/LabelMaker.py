@@ -44,6 +44,8 @@ class LabelMaker(threading.Thread):
         """
 
         self.labels.push_sample(label)
+        
+        # print(f'LabelMaker pushed label: {label}')
 
     def make_label(self):
         """Create discrete labels from continuous classifier output.
@@ -79,6 +81,6 @@ class LabelMaker(threading.Thread):
             if self.label_origin == 'implicit':
                 self.current_label = self.make_label()
                 
-            print("got %s" % (self.current_label[0]))
+            # print("Label maker got label %s" % (self.current_label[0]))
             self.send_label(self.current_label)
             time.sleep(1)
