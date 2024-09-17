@@ -29,7 +29,7 @@ class UCBQEnvironmentLSL(ModifiedRandomEnvironment):
         self.environment_logger.addHandler(ch)            
 
         # Define the AI stream
-        info = StreamInfo('AIStream', 'Markers', 1, 0, 'int32', 'ai_stream')
+        info = StreamInfo('AIStream', 'Markers', 1, 0, 'string', 'ai_stream')
         self.outlet = StreamOutlet(info)
         self.environment_logger.info("AI stream created.")
 
@@ -56,7 +56,7 @@ class UCBQEnvironmentLSL(ModifiedRandomEnvironment):
         # wait for the participant to answer to "How off was the feedback?"
         # and assign it to the variable `answer`
 
-        outgoing_sample = [action]
+        outgoing_sample = [str(action)]
         self.outlet.push_chunk(outgoing_sample)
         print(f"Sent to Participant: {outgoing_sample}")
         
