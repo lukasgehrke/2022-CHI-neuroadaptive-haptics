@@ -138,6 +138,8 @@ class UCBQAgent:
         
         self.logger.info(f'{self.t}, {action}, {reward}, {self.Q[state][action]}, {self.alpha}, {self.epsilon}')
 
+        return self.t, action, reward, round(self.Q[state][action], 4), round(self.alpha, 4), round(self.epsilon, 4)
+
 
     def reset(self):
         # Reset Q-table and N-table

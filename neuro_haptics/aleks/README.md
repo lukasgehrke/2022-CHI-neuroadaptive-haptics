@@ -1,5 +1,7 @@
-# lukas-nah
+# Agent simulation
 
-Starting point is `run_experiment.py`.
+1. Run `NahEnvironment.py`
+2. (in a separate terminal) Run `run_experiment_lsl.py`
 
-The goal of the project is to implement Q-Learning for this specific use case.
+Sometimes LSL streams don't start or cannot be found. A restart of the terminal/
+machine can help.

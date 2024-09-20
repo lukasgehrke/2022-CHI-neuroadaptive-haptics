@@ -7,6 +7,14 @@ from SimPhysDataStreamer import SimPhysDataStreamer
 from Classifier import Classifier
 from LabelMaker import LabelMaker
 
+import sys
+# Adding to path so we can import `rl`
+sys.path.append(os.path.join(os.path.dirname(__file__), 'aleks'))
+
+# Now you can import UCBQEnvironment
+from rl.ucbq_environment import ModifiedRandomEnvironment
+
+
 # Setup logging
 logging.basicConfig(level=logging.INFO)
 
@@ -97,21 +105,8 @@ if __name__ == "__main__":
                 
                 ai_feedback_level = int(incoming_sample[0][0])
                 
-                
-                # @Lukas: EEG classifier replaces this mock response
-                
-                ### 
-                # Mock response
-                action = ai_feedback_level
-                correct_action = 1
-                response = 0 if action == correct_action else -abs(correct_action - action)
-
-                # Simulate noise
-                if np.random.rand() < 0.3:
-                    response += np.random.choice([-1, 1])
-                response = np.clip(response, -6, 0)
-                ###
-                
+                # @Lukas: EEG classifier replaces this mock response                                
+                response = ModifiedRandomEnvironment.get_mock_response(ai_feedback_level)
 
                 response = [str(response)]                
                 nah.sim_labels.push_chunk(response)

@@ -50,6 +50,7 @@ agent = UCBQAgent()
 # env = ModifiedRandomEnvironment()
 from rl.ucbq_environment_lsl import UCBQEnvironmentLSL
 env = UCBQEnvironmentLSL()
+names = ['t', 'action', 'reward', 'new_Q_value', 'alpha', 'epsilon']
 
 # State is fixed to 0
 state = 0
@@ -68,9 +69,13 @@ while True:
 
     action = agent.choose_action(state) 
     reward, next_state, done = env.step(action)
-    print(f"step: {t}, time: {round(elapsed_time, 2)}, action: {action}, reward {reward}")
+    # print(f"step: {t}, time: {round(elapsed_time, 2)}, action: {action}, reward {reward}")
        
-    agent.learn(state, action, reward, next_state)
+    learn_response = agent.learn(state, action, reward, next_state)
+
+    zipped = dict(zip(names, learn_response))
+    formatted_zipped = ', '.join([f'{key}: {value}' for key, value in zipped.items()])
+    env.environment_logger.info(f't: {learn_response[0]} - l - {formatted_zipped}')
 
     t += 1
     
