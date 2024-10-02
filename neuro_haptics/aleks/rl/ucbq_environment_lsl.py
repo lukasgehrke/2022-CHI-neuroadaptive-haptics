@@ -8,8 +8,6 @@ class UCBQEnvironmentLSL(ModifiedRandomEnvironment):
     def __init__(self, params={}):
         super().__init__(params=params)
 
-        print("UCBQEnvironmentLSL init")
-
         # # Setup logging
         # logging.basicConfig(level=logging.INFO)    
 
@@ -22,11 +20,13 @@ class UCBQEnvironmentLSL(ModifiedRandomEnvironment):
         ch.setLevel(logging.INFO)
 
         # Create formatter and add it to the handlers
-        formatter = logging.Formatter('%(asctime)s %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+        formatter = logging.Formatter('%(asctime)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
         ch.setFormatter(formatter)
 
         # Add the handlers to the logger
-        self.environment_logger.addHandler(ch)            
+        self.environment_logger.addHandler(ch)         
+
+        self.environment_logger.info("UCBQEnvironmentLSL init")           
 
         # Define the AI stream
         info = StreamInfo('AIStream', 'Markers', 1, 0, 'string', 'ai_stream')
@@ -58,7 +58,8 @@ class UCBQEnvironmentLSL(ModifiedRandomEnvironment):
 
         outgoing_sample = [str(action)]
         self.outlet.push_chunk(outgoing_sample)
-        print(f"Sent to Participant: {outgoing_sample}")
+        # print(f"Sent to Participant: {outgoing_sample}")
+        self.environment_logger.info(f"t: {self.t} - > {action} - sent to Participant")
         
         incoming_sample = None
         timestamp = None
@@ -66,9 +67,19 @@ class UCBQEnvironmentLSL(ModifiedRandomEnvironment):
         while incoming_sample is None or len(incoming_sample) == 0:
             incoming_sample, timestamp = self.inlet.pull_chunk(timeout=0.0)
 
-        print(f"Received from Participant: {incoming_sample} at {timestamp}")
+        # print(f"Received from Participant: {incoming_sample} at {timestamp}")
 
+        # 1 (completely disagree)
+        # 2 (disagree)
+        # 3 (neither disagree nor agree)
+        # 4 (agree)
+        # 5 (strongly agree)
         answer = int(incoming_sample[0][0])
+
+        # Convert answer to format expected by the agent (negative values)       
+
+        # print(f"Received from Participant: {answer} at {timestamp[0]}")
+        self.environment_logger.info(f"t: {self.t} - < {answer} - received from Participant at {timestamp[0]}")
 
         # Sleep to simulate time between responses
         time.sleep(1)

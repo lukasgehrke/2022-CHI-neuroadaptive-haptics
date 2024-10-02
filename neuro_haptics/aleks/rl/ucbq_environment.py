@@ -72,3 +72,16 @@ class ModifiedRandomEnvironment:
 
     def get_num_unique_rewards(self):
         return max(abs(self.num_actions - self.correct_action), abs(self.correct_action + 1))
+
+    def get_mock_response(ai_feedback_level):
+        num_actions = 5
+        action = ai_feedback_level
+        correct_action = 1
+        response = 0 if action == correct_action else -abs(correct_action - action)
+
+        # Simulate noise
+        if np.random.rand() < 0.3:
+            response += np.random.choice([-1, 1])
+        response = np.clip(response, -(num_actions-1), 0)
+
+        return response
