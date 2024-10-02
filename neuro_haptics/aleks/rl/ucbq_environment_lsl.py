@@ -50,8 +50,6 @@ class UCBQEnvironmentLSL(ModifiedRandomEnvironment):
         time.sleep(5)        
         
     def send_feedback_to_participant_and_get_participant_answer(self, action):
-        # TODO
-        # LSL here
         # We send the predicted `feedback` (action) to the participant and
         # wait for the participant to answer to "How off was the feedback?"
         # and assign it to the variable `answer`
@@ -75,8 +73,7 @@ class UCBQEnvironmentLSL(ModifiedRandomEnvironment):
         # 4 (agree)
         # 5 (strongly agree)
         answer = int(incoming_sample[0][0])
-
-        # Convert answer to format expected by the agent (negative values)       
+      
 
         # print(f"Received from Participant: {answer} at {timestamp[0]}")
         self.environment_logger.info(f"t: {self.t} - < {answer}")
@@ -84,4 +81,8 @@ class UCBQEnvironmentLSL(ModifiedRandomEnvironment):
         # Sleep to simulate time between responses
         time.sleep(1)
 
-        return answer
+        # Convert answer to format expected by the agent (negative values)
+        num_actions = 5
+        reward = answer - num_actions
+
+        return reward
