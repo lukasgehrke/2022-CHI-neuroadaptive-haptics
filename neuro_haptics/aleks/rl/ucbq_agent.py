@@ -32,7 +32,7 @@ class UCBQAgent:
         # Create file handler which logs even debug messages
         fh = logging.FileHandler(log_filename)
 
-        headers = "timestamp, t, action, reward, new_Q_value, alpha, epsilon"
+        headers = "timestamp,t,action,reward,reward_adjusted,new_Q_value,alpha,epsilon"
         with open(log_filename, 'w') as f:
             f.write(headers + '\n')  
 
@@ -131,14 +131,13 @@ class UCBQAgent:
         self.rewards[action].append(reward)
 
         # Adjust reward
-        reward, _ = Counter(self.rewards[action]).most_common(1)[0]
+        reward_adjusted, _ = Counter(self.rewards[action]).most_common(1)[0]
 
-        self.Q[state][action] = (1 - self.alpha) * self.Q[state][action] + self.alpha * (reward + self.gamma * np.max(self.Q[next_state]))
-
+        self.Q[state][action] = (1 - self.alpha) * self.Q[state][action] + self.alpha * (reward_adjusted + self.gamma * np.max(self.Q[next_state]))
         
-        self.logger.info(f'{self.t}, {action}, {reward}, {self.Q[state][action]}, {self.alpha}, {self.epsilon}')
+        self.logger.info(f'{self.t},{action},{reward},{reward_adjusted},{self.Q[state][action]},{self.alpha},{self.epsilon}')
 
-        return self.t, action, reward, round(self.Q[state][action], 4), round(self.alpha, 4), round(self.epsilon, 4)
+        return self.t, action, reward, reward_adjusted, round(self.Q[state][action], 4), round(self.alpha, 4), round(self.epsilon, 4)
 
 
     def reset(self):

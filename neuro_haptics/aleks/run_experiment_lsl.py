@@ -33,7 +33,7 @@ parser.add_argument("-t", "--TimeOut", help = "Stop script after n seconds")
 args = parser.parse_args()
 # timeOut = float(args.TimeOut) if bool(args.TimeOut) else 1.69
 timeOut = None
-max_steps = 120
+max_steps = 50
 
 params = default_params()
 agent = UCBQAgent()
@@ -50,7 +50,7 @@ agent = UCBQAgent()
 # env = ModifiedRandomEnvironment()
 from rl.ucbq_environment_lsl import UCBQEnvironmentLSL
 env = UCBQEnvironmentLSL()
-names = ['t', 'action', 'reward', 'new_Q_value', 'alpha', 'epsilon']
+names = ['t', 'action', 'reward', 'reward_adjusted', 'new_Q_value', 'alpha', 'epsilon']
 
 # State is fixed to 0
 state = 0
