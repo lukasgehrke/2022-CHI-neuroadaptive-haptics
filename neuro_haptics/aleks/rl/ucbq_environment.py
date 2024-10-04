@@ -81,7 +81,7 @@ class ModifiedRandomEnvironment:
         response = 0 if action == correct_action else -abs(correct_action - action)
 
         # Simulate noise
-        if np.random.rand() < 0.5:
+        if np.random.rand() < 0.75:
             response += np.random.choice([-1, 1])
         response = np.clip(response, -(num_actions-1), 0)
 

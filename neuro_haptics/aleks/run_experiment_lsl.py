@@ -33,7 +33,7 @@ parser.add_argument("-t", "--TimeOut", help = "Stop script after n seconds")
 args = parser.parse_args()
 # timeOut = float(args.TimeOut) if bool(args.TimeOut) else 1.69
 timeOut = None
-max_steps = 50
+max_steps = 120
 
 params = default_params()
 agent = UCBQAgent()
