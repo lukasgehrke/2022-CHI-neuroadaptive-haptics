@@ -52,7 +52,7 @@ class NahEnvironment():
             # eeg = Classifier('BrainVision RDA', 'eeg_classifier', bci_params['classifier_update_rate'], bci_params['data_srate'], model_path_eeg, 
             #     bci_params['target_class'], bci_params['chans'], bci_params['threshold'], bci_params['windows'], bci_params['baseline'],
             #     debug)
-            self.eeg = Classifier('SimPhysDataStream_Lukas', 'eeg_classifier', bci_params['classifier_updat e_rate'], bci_params['data_srate'], model_path_eeg, 
+            self.eeg = Classifier('SimPhysDataStream_Lukas', 'eeg_classifier', bci_params['classifier_update_rate'], bci_params['data_srate'], model_path_eeg, 
                 bci_params['target_class'], bci_params['chans'], bci_params['threshold'], bci_params['windows'], bci_params['baseline'],
                 debug)            
             self.eeg.start()

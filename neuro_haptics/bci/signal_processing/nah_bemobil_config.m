@@ -3,9 +3,10 @@ clear bemobil_config
 %% General Setup
 
 if strcmp(current_sys,'win')
-    path = 'P:\Lukas_Gehrke\NAH';
+    path = 'P:\Lukas_Gehrke\fastReach';
 else
-    path = '/Volumes/Lukas_Gehrke/NAH';
+    % path = '/Volumes/Lukas_Gehrke/fastReach';
+    path = '/Users/lukasgehrke/Documents/publications/2022-CHI-neuroadaptive-haptics/';
 end
 
 bemobil_config.study_folder = [path filesep 'data' filesep]; %(NEEDS to have a filesep at the end, sorry!) 
@@ -19,11 +20,9 @@ bemobil_config.EEG_preprocessing_data_folder = ['3_EEG-preprocessing' filesep];
 bemobil_config.spatial_filters_folder = ['4_spatial-filters' filesep];
 bemobil_config.spatial_filters_folder_AMICA = ['4-1_AMICA' filesep];
 bemobil_config.single_subject_analysis_folder = ['5_single-subject-EEG-analysis' filesep];
-bemobil_config.motion_analysis_folder = ['6_single-subject-motion-analysis' filesep];
-bemobil_config.physio_analysis_folder = ['7_single-subject-eye-analysis' filesep];
 
 % filenames
-bemobil_config.merged_filename = 'merged_EEG.set';
+bemobil_config.merged_filename = 'nah_EEG.set';
 bemobil_config.basic_prepared_filename = 'basic_prepared.set';
 bemobil_config.preprocessed_filename = 'preprocessed.set';
 bemobil_config.filtered_filename = 'filtered.set';
