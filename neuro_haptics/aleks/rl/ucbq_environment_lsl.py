@@ -59,7 +59,7 @@ class UCBQEnvironmentLSL(ModifiedRandomEnvironment):
         outgoing_sample = [str(action)]
         self.outlet.push_chunk(outgoing_sample)
         # print(f"Sent to Participant: {outgoing_sample}")
-        self.environment_logger.info(f"t: {self.t} - > {action} - sent to Participant")
+        self.environment_logger.info(f"t: {self.t} - > {action}") # sent to Participant
         
         incoming_sample = None
         timestamp = None
@@ -79,7 +79,7 @@ class UCBQEnvironmentLSL(ModifiedRandomEnvironment):
         # Convert answer to format expected by the agent (negative values)       
 
         # print(f"Received from Participant: {answer} at {timestamp[0]}")
-        self.environment_logger.info(f"t: {self.t} - < {answer} - received from Participant at {timestamp[0]}")
+        self.environment_logger.info(f"t: {self.t} - < {answer}")
 
         # Sleep to simulate time between responses
         time.sleep(1)
