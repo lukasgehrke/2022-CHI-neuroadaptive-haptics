@@ -50,7 +50,7 @@ agent = UCBQAgent()
 # env = ModifiedRandomEnvironment()
 from rl.ucbq_environment_lsl import UCBQEnvironmentLSL
 env = UCBQEnvironmentLSL()
-names = ['t', 'action', 'reward', 'new_Q_value', 'alpha', 'epsilon']
+names = ['t', 'action', 'reward', 'reward_adjusted', 'new_Q_value', 'alpha', 'epsilon']
 
 # State is fixed to 0
 state = 0

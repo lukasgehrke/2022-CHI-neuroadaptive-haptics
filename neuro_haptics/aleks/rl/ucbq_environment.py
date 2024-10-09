@@ -33,7 +33,7 @@ import numpy as np
 
 # random seed will only give persistent results if you re-import the script
 # and restart the kernel in the notebook
-np.random.seed(69)
+# np.random.seed(69)
 
 class ModifiedRandomEnvironment:
     def __init__(self, num_states=10, params={}):
@@ -52,6 +52,7 @@ class ModifiedRandomEnvironment:
         # The "right" level of feedback
         self.correct_action = params.get('correct_action', 1)
 
+    # Old
     def send_feedback_to_participant_and_get_participant_answer(self, action):
         # Mock answers
         answer = 0 if action == self.correct_action else -abs(self.correct_action - action)
@@ -80,7 +81,7 @@ class ModifiedRandomEnvironment:
         response = 0 if action == correct_action else -abs(correct_action - action)
 
         # Simulate noise
-        if np.random.rand() < 0.3:
+        if np.random.rand() < 0.75:
             response += np.random.choice([-1, 1])
         response = np.clip(response, -(num_actions-1), 0)
 
