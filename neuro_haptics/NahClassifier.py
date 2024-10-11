@@ -1,4 +1,4 @@
-from pylsl import StreamInlet, resolve_byprop
+from pylsl import StreamInlet, StreamOutlet, StreamInfo, resolve_byprop
 import pickle, time, os, json
 import numpy as np
 import mne
@@ -45,8 +45,7 @@ class NahClassifier:
         #     self.marker_inlet = StreamInlet(streams[0])
 
         # set up outlet for sending predictions
-        # self.outlet = StreamOutlet(stream_info)
-        
+        self.labels = StreamOutlet(StreamInfo('implicit_labels', 'Markers', 1, 0, 'string', 'myuid34234'))
 
         # in order to use MNE create empty raw info object
         # self.mne_raw_info = mne.create_info(ch_names=[f"EEG{n:01}" for n in range(1, 66)],  ch_types=["eeg"] * 65, sfreq=self.srate)
@@ -174,7 +173,7 @@ class NahClassifier:
 
         # does it wait for a certain event to send the prediction? so is there a specific condition for the agent
         # to only listen to the prediction at a certain time?
-        pass
+        self.labels.push_sample(prediction)
 
 
 
@@ -188,20 +187,30 @@ if __name__ == "__main__":
     
     classifier = NahClassifier(model_path)
 
+    # Define a flag to track execution state
+    has_executed = False
+
     while True:
 
-        eeg = classifier.get_data()
-        # eeg, eye, fix_delay = classifier.get_data()
-        eeg_feat = classifier.compute_features(eeg, 'eeg')
-        eye_feat = classifier.compute_features(eeg, 'eye')
+        marker = classifier.marker_inlet.pull_sample()[0]
 
-        test_fix_delay = np.array([0.4])
+        # what if there are two grab markers
+        if marker and 'What:grab' in marker[0] and not has_executed:
+            
+            eeg = classifier.get_data()
+            # eeg, eye, fix_delay = classifier.get_data()
+            eeg_feat = classifier.compute_features(eeg, 'eeg')
+            eye_feat = classifier.compute_features(eeg, 'eye')
 
-        # concatenate eeg, eye, fix_delay
-        feature_vector = np.concatenate((eeg_feat, eye_feat, test_fix_delay), axis=0).reshape(1,-1)
+            test_fix_delay = np.array([0.4])
 
-        # pred
-        prediction = classifier.predict(feature_vector)
+            # concatenate eeg, eye, fix_delay
+            feature_vector = np.concatenate((eeg_feat, eye_feat, test_fix_delay), axis=0).reshape(1, -1)
 
-        # prediction = classifier.choose_nah_label()
-        # classifier.send_nah_label_to_ai(prediction)
+            # pred
+            prediction = classifier.predict(feature_vector)
+
+            classifier.send_nah_label_to_ai(prediction)
+
+            # Set the flag to indicate the code has been executed
+            has_executed = True
