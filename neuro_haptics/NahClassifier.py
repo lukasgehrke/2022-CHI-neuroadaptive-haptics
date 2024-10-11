@@ -183,7 +183,9 @@ if __name__ == "__main__":
 
     id = 1
     pID = 'sub-' + "%01d" % (id)
-    path = '/Volumes/Lukas_Gehrke/NAH/data/5_single-subject-EEG-analysis'
+    # path = '/Volumes/Lukas_Gehrke/NAH/data/5_single-subject-EEG-analysis'
+    path = r'P:\Lukas_Gehrke\NAH\data\5_single-subject-EEG-analysis'
+
     model_path = path+os.sep+pID+os.sep+'model.sav'
     
     classifier = NahClassifier(model_path)
