@@ -6,7 +6,8 @@ if strcmp(current_sys,'win')
     path = 'P:\Lukas_Gehrke\fastReach';
 else
     % path = '/Volumes/Lukas_Gehrke/fastReach';
-    path = '/Users/lukasgehrke/Documents/publications/2022-CHI-neuroadaptive-haptics/';
+    % path = '/Users/lukasgehrke/Documents/publications/2022-CHI-neuroadaptive-haptics/';
+    path = '/Volumes/Lukas_Gehrke/NAH/';
 end
 
 bemobil_config.study_folder = [path filesep 'data' filesep]; %(NEEDS to have a filesep at the end, sorry!) 
@@ -31,7 +32,7 @@ bemobil_config.dipfitted_filename = 'dipfitted.set';
 bemobil_config.preprocessed_and_ICA_filename = 'preprocessed_and_ICA.set';
 bemobil_config.single_subject_cleaned_ICA_filename = 'cleaned_with_ICA.set';
 
-bemobil_config.merged_physio_filename = 'merged_PHYSIO.set';
+bemobil_config.merged_physio_filename = 'nah_PHYSIO.set';
 bemobil_config.processed_physio_filename = 'physio_processed.set';
 
 %% Preprocessing
