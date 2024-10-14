@@ -192,27 +192,27 @@ if __name__ == "__main__":
     # Define a flag to track execution state
     has_executed = False
 
-    while True:
+    # while True:
 
-        marker = classifier.marker_inlet.pull_sample()[0]
+    #     marker = classifier.marker_inlet.pull_sample()[0]
 
-        # what if there are two grab markers
-        if marker and 'What:grab' in marker[0] and not has_executed:
+    #     # what if there are two grab markers
+    #     if marker and 'What:grab' in marker[0] and not has_executed:
             
-            eeg = classifier.get_data()
-            # eeg, eye, fix_delay = classifier.get_data()
-            eeg_feat = classifier.compute_features(eeg, 'eeg')
-            eye_feat = classifier.compute_features(eeg, 'eye')
+    #         eeg = classifier.get_data()
+    #         # eeg, eye, fix_delay = classifier.get_data()
+    #         eeg_feat = classifier.compute_features(eeg, 'eeg')
+    #         eye_feat = classifier.compute_features(eeg, 'eye')
 
-            test_fix_delay = np.array([0.4])
+    #         test_fix_delay = np.array([0.4])
 
-            # concatenate eeg, eye, fix_delay
-            feature_vector = np.concatenate((eeg_feat, eye_feat, test_fix_delay), axis=0).reshape(1, -1)
+    #         # concatenate eeg, eye, fix_delay
+    #         feature_vector = np.concatenate((eeg_feat, eye_feat, test_fix_delay), axis=0).reshape(1, -1)
 
-            # pred
-            prediction = classifier.predict(feature_vector)
+    #         # pred
+    #         prediction = classifier.predict(feature_vector)
 
-            classifier.send_nah_label_to_ai(prediction)
+    #         classifier.send_nah_label_to_ai(prediction)
 
-            # Set the flag to indicate the code has been executed
-            has_executed = True
+    #         # Set the flag to indicate the code has been executed
+    #         has_executed = True

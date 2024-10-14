@@ -4,8 +4,10 @@
 % Classifier Output data
 
 %% config
-current_sys = "mac";
-eeglab_ver(current_sys);
+% current_sys = "win";
+% eeglab_ver(current_sys);
+
+eeglab
 
 %% load configuration
 nah_bemobil_config;
