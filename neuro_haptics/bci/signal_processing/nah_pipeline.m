@@ -4,7 +4,7 @@
 % Classifier Output data
 
 %% config
-current_sys = "mac";
+current_sys = "win";
 eeglab_ver(current_sys);
 
 %% load configuration

@@ -31,23 +31,13 @@ from rl.utils import *
 parser = argparse.ArgumentParser()
 parser.add_argument("-t", "--TimeOut", help = "Stop script after n seconds")
 args = parser.parse_args()
-# timeOut = float(args.TimeOut) if bool(args.TimeOut) else 1.69
+
 timeOut = None
 max_steps = 120
 
 params = default_params()
 agent = UCBQAgent()
-# TODO: explore this
-# Episode rewards: -1729
-# agent = UCBQAgent(params=optimized_params)
-# Episode rewards: -35802
 
-# from rl.thompson_sampling_agent import ThompsonSamplingAgentTemporaryWrapper
-# agent = ThompsonSamplingAgentTemporaryWrapper()
-# Episode rewards: -33
-
-# from rl.ucbq_environment_stateless import ModifiedRandomEnvironment
-# env = ModifiedRandomEnvironment()
 from rl.ucbq_environment_lsl import UCBQEnvironmentLSL
 env = UCBQEnvironmentLSL()
 names = ['t', 'action', 'reward', 'reward_adjusted', 'new_Q_value', 'alpha', 'epsilon']
@@ -69,7 +59,6 @@ while True:
 
     action = agent.choose_action(state) 
     reward, next_state, done = env.step(action)
-    # print(f"step: {t}, time: {round(elapsed_time, 2)}, action: {action}, reward {reward}")
        
     learn_response = agent.learn(state, action, reward, next_state)
 
