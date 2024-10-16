@@ -38,6 +38,7 @@ class UCBQEnvironmentLSL(ModifiedRandomEnvironment):
         streams = None
         while streams is None:
             # streams = resolve_byprop('name', 'ParticipantStream')
+            # streams = resolve_byprop('name', 'implicit_labels')
             streams = resolve_byprop('name', 'explicit_labels')
             if not streams:
                 self.environment_logger.info("No Participant stream found, retrying...")

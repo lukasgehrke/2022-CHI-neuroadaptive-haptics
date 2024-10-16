@@ -114,4 +114,4 @@ if __name__ == "__main__":
                 logging.info(f"Sent to AI: {response}")
 
             # Sleep to simulate time between responses
-            time.sleep(1)        
+            time.sleep(1)
