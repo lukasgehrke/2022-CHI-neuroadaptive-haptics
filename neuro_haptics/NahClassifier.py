@@ -19,28 +19,41 @@ class NahClassifier:
         # resolve streams
         streams = None
         while streams is None:
-
+            print("Looking for EEG stream...")	
             streams = resolve_byprop('name', 'BrainVision RDA')
+            
+            # Don't think this is necessary, since resolve_prop will wait until it finds the stream
             if not streams:
                 print("No EEG stream found, retrying...")
                 time.sleep(1)
+            
+            print("EEG stream found!")
 
             # init EEG stream inlet
             self.eeg_inlet = StreamInlet(streams[0])
 
+            
+            print("Looking for EYE stream...")
             streams = resolve_byprop('name', 'NAH_GazeBehavior')
+            
             if not streams:
                 print("No EEG stream found, retrying...")
                 time.sleep(1)
 
+            print("EYE stream found!")
+
             # init EYE stream inlet
             self.eye_inlet = StreamInlet(streams[0])
 
+                        
+            print("Looking for Marker stream...")
             streams = resolve_byprop('name', 'NAH_Unity3DEvents')
             if not streams:
                 print("No EEG stream found, retrying...")
                 time.sleep(1)
 
+            
+            print("Marker stream found!")
             # init marker stream inlet
             self.marker_inlet = StreamInlet(streams[0])
 
@@ -78,12 +91,13 @@ class NahClassifier:
         all_eye_data = []
 
         # Continue pulling data until we have exactly 250 samples
+        fix_delay = 0
         grab_time = time.time()
         while len(all_eeg_data) < 108:
             eeg_data, _ = self.eeg_inlet.pull_chunk(timeout=0.0, max_samples=108 - len(all_eeg_data))
             all_eeg_data.extend(eeg_data)
             
-            eye_data, _ = [] #self.eye_inlet.pull_chunk(timeout=0.0, max_samples=108 - len(all_eeg_data))
+            eye_data, _ = self.eye_inlet.pull_chunk(timeout=0.0, max_samples=108 - len(all_eye_data))
             all_eye_data.extend(eye_data)
 
             marker_sample, _ = self.marker_inlet.pull_sample(timeout=0.0)
@@ -199,10 +213,12 @@ if __name__ == "__main__":
         # what if there are two grab markers
         if marker and 'What:grab' in marker[0] and not has_executed:
             
+            print("Grab marker detected: ", marker)
+
             # eeg = classifier.get_data()
             eeg, eye, fix_delay = classifier.get_data()
             eeg_feat = classifier.compute_features(eeg, 'eeg')
-            eye_feat = classifier.compute_features(eeg, 'eye')
+            eye_feat = classifier.compute_features(eye, 'eye')
 
             # test_fix_delay = np.array([0.4])
 
@@ -213,6 +229,8 @@ if __name__ == "__main__":
             prediction = classifier.predict(feature_vector)
 
             classifier.send_nah_label_to_ai(prediction)
+            
+            print("Prediction sent to AI: ", prediction)
 
             # Set the flag to indicate the code has been executed
             has_executed = True
