@@ -3,8 +3,10 @@ clear bemobil_config
 %% General Setup
 
 if strcmp(current_sys,'win')
-    % path = 'P:\Lukas_Gehrke\fastReach';
-    path = 'C:\Users\Lukas\Desktop\nah\tst-eeg';
+    path = 'P:\Lukas_Gehrke\NAH';
+    % path = 'C:\Users\Lukas\Desktop\nah\tst-eeg';
+elseif strcmp(current_sys,'c060')
+    path = 'P:\Lukas_Gehrke\NAH'; 
 else
     % path = '/Volumes/Lukas_Gehrke/fastReach';
     path = '/Users/lukasgehrke/Documents/publications/2022-CHI-neuroadaptive-haptics/';

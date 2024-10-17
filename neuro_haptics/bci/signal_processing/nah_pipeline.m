@@ -4,7 +4,7 @@
 % Classifier Output data
 
 %% config
-current_sys = "win";
+current_sys = "c060";
 eeglab_ver(current_sys);
 
 %% load configuration
