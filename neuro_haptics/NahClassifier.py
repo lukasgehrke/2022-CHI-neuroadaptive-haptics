@@ -187,6 +187,7 @@ class NahClassifier:
 
         # does it wait for a certain event to send the prediction? so is there a specific condition for the agent
         # to only listen to the prediction at a certain time?
+        prediction = str(prediction)
         self.labels.push_sample(prediction)
 
 
@@ -218,15 +219,16 @@ if __name__ == "__main__":
             # eeg = classifier.get_data()
             eeg, eye, fix_delay = classifier.get_data()
             eeg_feat = classifier.compute_features(eeg, 'eeg')
-            eye_feat = classifier.compute_features(eye, 'eye')
+            # eye_feat = classifier.compute_features(eye, 'eye')
+            eye_feat = np.zeros(8)
 
             # test_fix_delay = np.array([0.4])
 
             # concatenate eeg, eye, fix_delay
-            feature_vector = np.concatenate((eeg_feat, eye_feat, fix_delay), axis=0).reshape(1, -1)
+            feature_vector = np.concatenate((eeg_feat, eye_feat, [fix_delay]), axis=0).reshape(1, -1)
 
             # pred
-            prediction = classifier.predict(feature_vector)
+            prediction, probs_target_class, score = classifier.predict(feature_vector)
 
             classifier.send_nah_label_to_ai(prediction)
             
