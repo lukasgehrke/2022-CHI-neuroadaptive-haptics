@@ -28,7 +28,7 @@ class NahClassifier:
             # init EEG stream inlet
             self.eeg_inlet = StreamInlet(streams[0])
 
-            streams = resolve_byprop('name', 'test') # ! name of the eye stream
+            streams = resolve_byprop('name', 'NAH_GazeBehavior')
             if not streams:
                 print("No EEG stream found, retrying...")
                 time.sleep(1)
@@ -36,7 +36,7 @@ class NahClassifier:
             # init EYE stream inlet
             self.eye_inlet = StreamInlet(streams[0])
 
-            streams = resolve_byprop('name', 'NAH_Unity3DEvents') # ! name of the marker stream
+            streams = resolve_byprop('name', 'NAH_Unity3DEvents')
             if not streams:
                 print("No EEG stream found, retrying...")
                 time.sleep(1)
