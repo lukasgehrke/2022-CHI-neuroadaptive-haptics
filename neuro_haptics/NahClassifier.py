@@ -28,21 +28,21 @@ class NahClassifier:
             # init EEG stream inlet
             self.eeg_inlet = StreamInlet(streams[0])
 
-        #     streams = resolve_byprop('name', 'test') # ! name of the eye stream
-        #     if not streams:
-        #         print("No EEG stream found, retrying...")
-        #         time.sleep(1)
+            streams = resolve_byprop('name', 'test') # ! name of the eye stream
+            if not streams:
+                print("No EEG stream found, retrying...")
+                time.sleep(1)
 
-        #     # init EYE stream inlet
-        #     self.eye_inlet = StreamInlet(streams[0])
+            # init EYE stream inlet
+            self.eye_inlet = StreamInlet(streams[0])
 
-        #     streams = resolve_byprop('name', 'NAH_Unity3DEvents') # ! name of the marker stream
-        #     if not streams:
-        #         print("No EEG stream found, retrying...")
-        #         time.sleep(1)
+            streams = resolve_byprop('name', 'NAH_Unity3DEvents') # ! name of the marker stream
+            if not streams:
+                print("No EEG stream found, retrying...")
+                time.sleep(1)
 
-        #     # init marker stream inlet
-        #     self.marker_inlet = StreamInlet(streams[0])
+            # init marker stream inlet
+            self.marker_inlet = StreamInlet(streams[0])
 
         # set up outlet for sending predictions
         self.labels = StreamOutlet(StreamInfo('implicit_labels', 'Markers', 1, 0, 'string', 'myuid34234'))
@@ -83,18 +83,18 @@ class NahClassifier:
             eeg_data, _ = self.eeg_inlet.pull_chunk(timeout=0.0, max_samples=108 - len(all_eeg_data))
             all_eeg_data.extend(eeg_data)
             
-            # eye_data, _ = [] #self.eye_inlet.pull_chunk(timeout=0.0, max_samples=108 - len(all_eeg_data))
-            # all_eye_data.extend(eye_data)
+            eye_data, _ = [] #self.eye_inlet.pull_chunk(timeout=0.0, max_samples=108 - len(all_eeg_data))
+            all_eye_data.extend(eye_data)
 
-            # marker_sample, _ = self.marker_inlet.pull_sample(timeout=0.0)
-            # if marker_sample and 'focus:in;object: PlacementPos' in marker_sample[0]:
-            #     fix_delay = time.time() - grab_time
+            marker_sample, _ = self.marker_inlet.pull_sample(timeout=0.0)
+            if marker_sample and 'focus:in;object: PlacementPos' in marker_sample[0]:
+                fix_delay = time.time() - grab_time
 
         # Convert the list to a numpy array
         eeg_data = np.array(all_eeg_data).T
-        # eye_data = np.array(eye_data).T
+        eye_data = np.array(eye_data).T
 
-        return eeg_data #, eye_data, fix_delay
+        return eeg_data , eye_data, fix_delay
 
     def compute_features(self, data, modality):
         
@@ -151,20 +151,20 @@ class NahClassifier:
 
             return gaze_features
 
-    def choose_nah_label(self):
+    # def choose_nah_label(self):
 
-        # Get the data
-        data = self.get_data()
+    #     # Get the data
+    #     data = self.get_data()
 
-        # Compute the features
-        features = self.compute_features(data)
+    #     # Compute the features
+    #     features = self.compute_features(data)
 
-        # Predict the class
-        prediction = self.predict(features)
+    #     # Predict the class
+    #     prediction = self.predict(features)
 
-        discrete_prediction = self.discretize(prediction)
+    #     discrete_prediction = self.discretize(prediction)
 
-        return prediction
+    #     return prediction
     
     def send_nah_label_to_ai(self, prediction):
         
@@ -192,27 +192,27 @@ if __name__ == "__main__":
     # Define a flag to track execution state
     has_executed = False
 
-    # while True:
+    while True:
 
-    #     marker = classifier.marker_inlet.pull_sample()[0]
+        marker = classifier.marker_inlet.pull_sample()[0]
 
-    #     # what if there are two grab markers
-    #     if marker and 'What:grab' in marker[0] and not has_executed:
+        # what if there are two grab markers
+        if marker and 'What:grab' in marker[0] and not has_executed:
             
-    #         eeg = classifier.get_data()
-    #         # eeg, eye, fix_delay = classifier.get_data()
-    #         eeg_feat = classifier.compute_features(eeg, 'eeg')
-    #         eye_feat = classifier.compute_features(eeg, 'eye')
+            # eeg = classifier.get_data()
+            eeg, eye, fix_delay = classifier.get_data()
+            eeg_feat = classifier.compute_features(eeg, 'eeg')
+            eye_feat = classifier.compute_features(eeg, 'eye')
 
-    #         test_fix_delay = np.array([0.4])
+            # test_fix_delay = np.array([0.4])
 
-    #         # concatenate eeg, eye, fix_delay
-    #         feature_vector = np.concatenate((eeg_feat, eye_feat, test_fix_delay), axis=0).reshape(1, -1)
+            # concatenate eeg, eye, fix_delay
+            feature_vector = np.concatenate((eeg_feat, eye_feat, fix_delay), axis=0).reshape(1, -1)
 
-    #         # pred
-    #         prediction = classifier.predict(feature_vector)
+            # pred
+            prediction = classifier.predict(feature_vector)
 
-    #         classifier.send_nah_label_to_ai(prediction)
+            classifier.send_nah_label_to_ai(prediction)
 
-    #         # Set the flag to indicate the code has been executed
-    #         has_executed = True
+            # Set the flag to indicate the code has been executed
+            has_executed = True
