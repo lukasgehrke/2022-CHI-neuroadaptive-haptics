@@ -65,7 +65,10 @@ function nah_import(cfg, subject)
         'PO4', 'PO8', 'P6', 'P2', 'CPz', 'CP4', 'TP8', 'C6', 'C2', 'FC4', ...
         'FT8', 'F6', 'AF8', 'AF4', 'F2', 'VEOG' , 'EMG'};
     config.eeg.ref_channel        = 'FCz'; % optional, relevant only if you want to re-use the ref channel after re-referencing
+    
     config.other_data_types        = {'physio'}; % TODO ! Fix this for when eyetracking data is included
+    config.phys.streams{1}.stream_name = 'NAH_GazeBehavior';
+    % config.phys.streams{1}.stream_name = 'CPS1_GazeBehavior';
     
     %%
     
@@ -74,6 +77,10 @@ function nah_import(cfg, subject)
     % if ~strcmp(config.session, 'Baseline')
     %     config.phys.streams{1}.stream_name          = 'eeg_classifier';            % optional
     % end
+
+    % TODO remove, only there for test dataset
+    % config.eeg_index = 2;
+    % config.load_xdf_flags = {'HandleJitterRemoval', false};
 
     bemobil_xdf2bids(config, ...
         'general_metadata', generalInfo,...

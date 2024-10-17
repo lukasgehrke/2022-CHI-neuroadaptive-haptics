@@ -1,18 +1,19 @@
 
 %% config
-eeglab; 
+current_sys = "mac";
+eeglab_ver(current_sys);
 
-path = '/Users/lukasgehrke/Documents/publications/2022-CHI-neuroadaptive-haptics/'; % repository path
+path = '/Volumes/Lukas_Gehrke/NAH/data/0_source-data/sub-001/'; % repository path
 
 %% load data and parse events
 
-EEG = pop_loadxdf(fullfile(path, 'example_data', 'EMS1.xdf'), ...
+EEG = pop_loadxdf(fullfile(path, 'nah.xdf'), ...
     'streamtype', 'EEG', 'exclude_markerstreams', {});
 allEventsLats = [EEG.event.latency];
 
 %% instantiate the library
 disp('Loading library...');
-lib = lsl_loadlib(); % needs the lsl library in path
+lib = lsl_loadlib('/Users/lukasgehrke/code/liblsl-Matlab/bin'); % needs the lsl library in path
 
 % make a new stream outlet
 disp('Creating a new streaminfo...');
@@ -22,7 +23,7 @@ disp('Opening an outlet...');
 outlet = lsl_outlet(info);
 
 % make a new stream outlet
-info_marker = lsl_streaminfo(lib,'fastReach_restream','Markers',1,0,'cf_string','sdfwerr32432');
+info_marker = lsl_streaminfo(lib,'NAH_Unity3DEvents','Markers',1,0,'cf_string','sdfwerr32432');
 disp('Opening an outlet...');
 outlet_marker = lsl_outlet(info_marker);
 

@@ -19,5 +19,6 @@
 7. Start Unity project
     1. branch `aleks-no-buttons`
     2. If the hand is all weird,close unity and calibrate again, and open ujnity agaim
-8. Run`/../2022-CHI-neuroadaptive-haptics/neuro_haptics/aleks/run_experiment_lsl.py`
+8. Run`../2022-CHI-neuroadaptive-haptics/neuro_haptics/aleks/run_experiment_lsl.py`
     1. Make sure to Ctrl+C after you’re done with the script. If you restart the Unity project while the AI script is still running, Unity will throw an error
+9. Run `../2022-CHI-neuroadaptive-haptics/neuro_haptics/aleks/log_plot_live.ipynb` for a fancy live plot of the logs
