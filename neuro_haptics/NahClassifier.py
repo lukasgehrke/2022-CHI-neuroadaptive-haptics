@@ -93,6 +93,8 @@ class NahClassifier:
         # Continue pulling data until we have exactly 250 samples
         fix_delay = 0
         grab_time = time.time()
+
+        # Cannot test this right now because only restreaming one stream at a time and not all three in parallel in my test environment
         while len(all_eeg_data) < 108:
             eeg_data, _ = self.eeg_inlet.pull_chunk(timeout=0.0, max_samples=108 - len(all_eeg_data))
             all_eeg_data.extend(eeg_data)
@@ -106,7 +108,7 @@ class NahClassifier:
 
         # Convert the list to a numpy array
         eeg_data = np.array(all_eeg_data).T
-        eye_data = np.array(eye_data).T
+        eye_data = np.array(all_eye_data).T
 
         return eeg_data , eye_data, fix_delay
 
@@ -198,6 +200,7 @@ if __name__ == "__main__":
     id = 1
     pID = 'sub-' + "%01d" % (id)
     # path = '/Volumes/Lukas_Gehrke/NAH/data/5_single-subject-EEG-analysis'
+    # path = '/Users/lukasgehrke/data/NAH/data/5_single-subject-EEG-analysis/'
     path = r'P:\Lukas_Gehrke\NAH\data\5_single-subject-EEG-analysis'
 
     model_path = path+os.sep+pID+os.sep+'model.sav'
@@ -216,12 +219,15 @@ if __name__ == "__main__":
             
             print("Grab marker detected: ", marker)
 
-            # eeg = classifier.get_data()
             eeg, eye, fix_delay = classifier.get_data()
+            
             eeg_feat = classifier.compute_features(eeg, 'eeg')
-            # eye_feat = classifier.compute_features(eye, 'eye')
-            eye_feat = np.zeros(8)
+            eye_feat = classifier.compute_features(eye, 'eye')
 
+            # for tests
+            # eeg = classifier.get_data()
+            # eye = classifier.get_data()            
+            # eye_feat = np.zeros(8)
             # test_fix_delay = np.array([0.4])
 
             # concatenate eeg, eye, fix_delay
