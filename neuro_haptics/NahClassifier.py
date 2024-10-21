@@ -2,10 +2,17 @@ from pylsl import StreamInlet, StreamOutlet, StreamInfo, resolve_byprop
 import pickle, time, os, json
 import numpy as np
 import mne
+from sklearn.impute import SimpleImputer
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 
 class NahClassifier:
     def __init__(self, model_path):
 
+        # Initialize the model and imputer
+        self.model = LinearDiscriminantAnalysis()
+        self.imputer = SimpleImputer(strategy='mean')
+        self.expected_num_features = 521  # Set this to the number of features the model expects
+        
         # Load the pre-trained model
         self.model = pickle.load(open(model_path, 'rb'))
         # load boundaries for the classifier
@@ -58,15 +65,27 @@ class NahClassifier:
             self.marker_inlet = StreamInlet(streams[0])
 
         # set up outlet for sending predictions
-        self.labels = StreamOutlet(StreamInfo('implicit_labels', 'Markers', 1, 0, 'string', 'myuid34234'))
+        self.labels = StreamOutlet(StreamInfo('labels', 'Markers', 1, 0, 'string', 'myuid34234'))
 
         # in order to use MNE create empty raw info object
         # self.mne_raw_info = mne.create_info(ch_names=[f"EEG{n:01}" for n in range(1, 66)],  ch_types=["eeg"] * 65, sfreq=self.srate)
     
     def predict(self, features):
-        
-        prediction = int(self.model.predict(features)[0]) #predicted class
-        probs = self.model.predict_proba(features) #probability for class prediction
+        # Impute missing values
+        features = self.imputer.fit_transform(features)
+
+        # Adjust the number of features to match the model's expected input shape
+        if features.shape[1] < self.expected_num_features:
+            # Pad with zeros if there are fewer features
+            padding = np.zeros((features.shape[0], self.expected_num_features - features.shape[1]))
+            features = np.hstack((features, padding))
+        elif features.shape[1] > self.expected_num_features:
+            # Truncate if there are more features
+            features = features[:, :self.expected_num_features]
+
+        # Predict the class
+        prediction = int(self.model.predict(features)[0])  # predicted class
+        probs = self.model.predict_proba(features)  # probability for class prediction
         probs_target_class = probs[0][int(self.target_class)]
         score = self.model.transform(features)[0][0]
 
@@ -162,8 +181,35 @@ class NahClassifier:
 
             # Example: Compute windowed means
             gaze_velocity = gaze_velocity[baseline_end:]
+
+            # Example values for num_windows and window_size
+            num_windows = 8
+            window_size = 12
+
+            # Compute the required size
+            required_size = num_windows * window_size
+
+            # Print the current size of gaze_velocity
+            print(f"Size of gaze_velocity: {gaze_velocity.size}")
+
+            # Pad gaze_velocity if its size is less than the required size
+            if gaze_velocity.size < required_size:
+                padding_size = required_size - gaze_velocity.size
+                gaze_velocity = np.pad(gaze_velocity, (0, padding_size), 'constant', constant_values=np.nan)
+                print(f"Padded gaze_velocity to size: {gaze_velocity.size}")
+
+            # Truncate gaze_velocity if its size is greater than the required size
+            elif gaze_velocity.size > required_size:
+                gaze_velocity = gaze_velocity[:required_size]
+                print(f"Truncated gaze_velocity to size: {gaze_velocity.size}")
+
+            # Reshape gaze_velocity
             reshaped_gaze = gaze_velocity.reshape(num_windows, window_size)
-            gaze_features = reshaped_gaze.mean(axis=1).flatten() #.reshape(1, -1)
+            print(f"Reshaped gaze_velocity to shape: {reshaped_gaze.shape}")
+
+            # Compute gaze features
+            gaze_features = reshaped_gaze.mean(axis=1).flatten()
+            print(f"Gaze features: {gaze_features}")
 
             return gaze_features
 

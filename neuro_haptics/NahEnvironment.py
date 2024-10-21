@@ -69,7 +69,8 @@ if __name__ == "__main__":
 
     # data_source = input("Real data or simulated data? Enter 'real' or 'simulated': ")
     # environment = input("Enter 'explicit' or 'implicit' for environment to be simulated: ")
-    environment = 'explicit'
+    # environment = 'explicit'
+    environment = 'implicit'
     data_source = 'simulated'
 
     nah = NahEnvironment(data_source, environment)
