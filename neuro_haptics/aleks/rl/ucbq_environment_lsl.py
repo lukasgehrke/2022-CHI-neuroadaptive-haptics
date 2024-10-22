@@ -33,19 +33,20 @@ class UCBQEnvironmentLSL(ModifiedRandomEnvironment):
         self.outlet = StreamOutlet(info)
         self.environment_logger.info("AI stream created.")
 
-        # Resolve the participant stream
-        self.environment_logger.info("Looking for a Participant stream...")
+        # Resolve the labels stream
+        self.labels_stream_name = 'labels'
+        self.environment_logger.info(f"Looking for a {self.labels_stream_name} stream...")
         streams = None
         while streams is None:
             # streams = resolve_byprop('name', 'ParticipantStream')
             # streams = resolve_byprop('name', 'implicit_labels')
-            streams = resolve_byprop('name', 'labels')
+            streams = resolve_byprop('name', self.labels_stream_name)
             if not streams:
-                self.environment_logger.info("No Participant stream found, retrying...")
+                self.environment_logger.info(f"No {self.labels_stream_name} stream found, retrying...")
                 time.sleep(1)
 
         self.inlet = StreamInlet(streams[0])
-        self.environment_logger.info("Participant stream found.")
+        self.environment_logger.info(f"{self.labels_stream_name} stream found.")
 
         # Delay to ensure Participant stream is ready
         time.sleep(5)        

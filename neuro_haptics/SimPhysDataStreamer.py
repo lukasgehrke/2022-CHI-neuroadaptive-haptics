@@ -86,10 +86,10 @@ class SimPhysDataStreamer(threading.Thread):
             # push to self.labels
             self.send_eeg()
 
-            if self.eye_stream_name != '':
-                self.send_eye()
+            # if self.eye_stream_name != '':
+            #     self.send_eye()
 
-            self.send_events()
+            # self.send_events()
 
             # wait for 1 second
             time.sleep(self.sample_interval[self.eeg_ix])

@@ -298,6 +298,11 @@ if __name__ == "__main__":
                     # pred
                     prediction, probs_target_class, score = classifier.predict(feature_vector)
 
-                    classifier.send_nah_label_to_ai(prediction)
+                    print(f'Classifier stuff {prediction}, {probs_target_class}, {score}')
                     
-                    print("Prediction sent to AI: ", prediction)
+                    # Map probs_target_class to an int value in the range 1 to 5
+                    mapped_label = max(1, int(np.ceil(probs_target_class * 5)))
+
+                    classifier.send_nah_label_to_ai(mapped_label)
+                    
+                    print("Label sent to AI: ", mapped_label)
