@@ -253,38 +253,51 @@ if __name__ == "__main__":
     
     classifier = NahClassifier(model_path)
 
-    # Define a flag to track execution state
-    has_executed = False
+    last_grab_number = -1
 
+    start_print_time = time.time()
+    last_print_time = start_print_time
+    
     while True:
+        current_time = time.time()
+        if current_time - last_print_time >= 1:
+            elapsed_time = current_time - start_print_time
+            minutes, seconds = divmod(int(elapsed_time), 60)
+            formatted_time = f"{minutes:02}:{seconds:02}"
+            print(f"{formatted_time} - Waiting for grab marker...")
+            last_print_time = current_time
 
         marker = classifier.marker_inlet.pull_sample()[0]
 
         # what if there are two grab markers
-        if marker and 'What:grab' in marker[0] and not has_executed:
+        if marker and 'What:' in marker[0]:
+            marker_data = marker[0].split(';')
+            marker_dict = {item.split(':')[0]: item.split(':')[1] for item in marker_data}
+            what = marker_dict.get('What')
             
-            print("Grab marker detected: ", marker)
+            if what == 'grab':
+                current_grab_number = int(marker_dict.get('Number', 0))
 
-            eeg, eye, fix_delay = classifier.get_data()
-            
-            eeg_feat = classifier.compute_features(eeg, 'eeg')
-            eye_feat = classifier.compute_features(eye, 'eye')
+                if current_grab_number > last_grab_number:           
+                    print(f"Grab {current_grab_number} detected: ", marker)
 
-            # for tests
-            # eeg = classifier.get_data()
-            # eye = classifier.get_data()            
-            # eye_feat = np.zeros(8)
-            # test_fix_delay = np.array([0.4])
+                    eeg, eye, fix_delay = classifier.get_data()
+                    
+                    eeg_feat = classifier.compute_features(eeg, 'eeg')
+                    eye_feat = classifier.compute_features(eye, 'eye')
 
-            # concatenate eeg, eye, fix_delay
-            feature_vector = np.concatenate((eeg_feat, eye_feat, [fix_delay]), axis=0).reshape(1, -1)
+                    # for tests
+                    # eeg = classifier.get_data()
+                    # eye = classifier.get_data()            
+                    # eye_feat = np.zeros(8)
+                    # test_fix_delay = np.array([0.4])
 
-            # pred
-            prediction, probs_target_class, score = classifier.predict(feature_vector)
+                    # concatenate eeg, eye, fix_delay
+                    feature_vector = np.concatenate((eeg_feat, eye_feat, [fix_delay]), axis=0).reshape(1, -1)
 
-            classifier.send_nah_label_to_ai(prediction)
-            
-            print("Prediction sent to AI: ", prediction)
+                    # pred
+                    prediction, probs_target_class, score = classifier.predict(feature_vector)
 
-            # Set the flag to indicate the code has been executed
-            has_executed = True
+                    classifier.send_nah_label_to_ai(prediction)
+                    
+                    print("Prediction sent to AI: ", prediction)
