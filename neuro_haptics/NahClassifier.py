@@ -2,10 +2,17 @@ from pylsl import StreamInlet, StreamOutlet, StreamInfo, resolve_byprop
 import pickle, time, os, json
 import numpy as np
 import mne
+from sklearn.impute import SimpleImputer
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 
 class NahClassifier:
     def __init__(self, model_path):
 
+        # Initialize the model and imputer
+        self.model = LinearDiscriminantAnalysis()
+        self.imputer = SimpleImputer(strategy='mean')
+        self.expected_num_features = 521  # Set this to the number of features the model expects
+        
         # Load the pre-trained model
         self.model = pickle.load(open(model_path, 'rb'))
         # load boundaries for the classifier
@@ -58,15 +65,27 @@ class NahClassifier:
             self.marker_inlet = StreamInlet(streams[0])
 
         # set up outlet for sending predictions
-        self.labels = StreamOutlet(StreamInfo('implicit_labels', 'Markers', 1, 0, 'string', 'myuid34234'))
+        self.labels = StreamOutlet(StreamInfo('labels', 'Markers', 1, 0, 'string', 'myuid34234'))
 
         # in order to use MNE create empty raw info object
         # self.mne_raw_info = mne.create_info(ch_names=[f"EEG{n:01}" for n in range(1, 66)],  ch_types=["eeg"] * 65, sfreq=self.srate)
     
     def predict(self, features):
-        
-        prediction = int(self.model.predict(features)[0]) #predicted class
-        probs = self.model.predict_proba(features) #probability for class prediction
+        # Impute missing values
+        features = self.imputer.fit_transform(features)
+
+        # Adjust the number of features to match the model's expected input shape
+        if features.shape[1] < self.expected_num_features:
+            # Pad with zeros if there are fewer features
+            padding = np.zeros((features.shape[0], self.expected_num_features - features.shape[1]))
+            features = np.hstack((features, padding))
+        elif features.shape[1] > self.expected_num_features:
+            # Truncate if there are more features
+            features = features[:, :self.expected_num_features]
+
+        # Predict the class
+        prediction = int(self.model.predict(features)[0])  # predicted class
+        probs = self.model.predict_proba(features)  # probability for class prediction
         probs_target_class = probs[0][int(self.target_class)]
         score = self.model.transform(features)[0][0]
 
@@ -162,8 +181,35 @@ class NahClassifier:
 
             # Example: Compute windowed means
             gaze_velocity = gaze_velocity[baseline_end:]
+
+            # Example values for num_windows and window_size
+            num_windows = 8
+            window_size = 12
+
+            # Compute the required size
+            required_size = num_windows * window_size
+
+            # Print the current size of gaze_velocity
+            print(f"Size of gaze_velocity: {gaze_velocity.size}")
+
+            # Pad gaze_velocity if its size is less than the required size
+            if gaze_velocity.size < required_size:
+                padding_size = required_size - gaze_velocity.size
+                gaze_velocity = np.pad(gaze_velocity, (0, padding_size), 'constant', constant_values=np.nan)
+                print(f"Padded gaze_velocity to size: {gaze_velocity.size}")
+
+            # Truncate gaze_velocity if its size is greater than the required size
+            elif gaze_velocity.size > required_size:
+                gaze_velocity = gaze_velocity[:required_size]
+                print(f"Truncated gaze_velocity to size: {gaze_velocity.size}")
+
+            # Reshape gaze_velocity
             reshaped_gaze = gaze_velocity.reshape(num_windows, window_size)
-            gaze_features = reshaped_gaze.mean(axis=1).flatten() #.reshape(1, -1)
+            print(f"Reshaped gaze_velocity to shape: {reshaped_gaze.shape}")
+
+            # Compute gaze features
+            gaze_features = reshaped_gaze.mean(axis=1).flatten()
+            print(f"Gaze features: {gaze_features}")
 
             return gaze_features
 
@@ -207,38 +253,56 @@ if __name__ == "__main__":
     
     classifier = NahClassifier(model_path)
 
-    # Define a flag to track execution state
-    has_executed = False
+    last_grab_number = -1
 
+    start_print_time = time.time()
+    last_print_time = start_print_time
+    
     while True:
+        current_time = time.time()
+        if current_time - last_print_time >= 1:
+            elapsed_time = current_time - start_print_time
+            minutes, seconds = divmod(int(elapsed_time), 60)
+            formatted_time = f"{minutes:02}:{seconds:02}"
+            print(f"{formatted_time} - Waiting for grab marker...")
+            last_print_time = current_time
 
         marker = classifier.marker_inlet.pull_sample()[0]
 
         # what if there are two grab markers
-        if marker and 'What:grab' in marker[0] and not has_executed:
+        if marker and 'What:' in marker[0]:
+            marker_data = marker[0].split(';')
+            marker_dict = {item.split(':')[0]: item.split(':')[1] for item in marker_data}
+            what = marker_dict.get('What')
             
-            print("Grab marker detected: ", marker)
+            if what == 'grab':
+                current_grab_number = int(marker_dict.get('Number', 0))
 
-            eeg, eye, fix_delay = classifier.get_data()
-            
-            eeg_feat = classifier.compute_features(eeg, 'eeg')
-            eye_feat = classifier.compute_features(eye, 'eye')
+                if current_grab_number > last_grab_number:           
+                    print(f"Grab {current_grab_number} detected: ", marker)
 
-            # for tests
-            # eeg = classifier.get_data()
-            # eye = classifier.get_data()            
-            # eye_feat = np.zeros(8)
-            # test_fix_delay = np.array([0.4])
+                    eeg, eye, fix_delay = classifier.get_data()
+                    
+                    eeg_feat = classifier.compute_features(eeg, 'eeg')
+                    eye_feat = classifier.compute_features(eye, 'eye')
 
-            # concatenate eeg, eye, fix_delay
-            feature_vector = np.concatenate((eeg_feat, eye_feat, [fix_delay]), axis=0).reshape(1, -1)
+                    # for tests
+                    # eeg = classifier.get_data()
+                    # eye = classifier.get_data()            
+                    # eye_feat = np.zeros(8)
+                    # test_fix_delay = np.array([0.4])
 
-            # pred
-            prediction, probs_target_class, score = classifier.predict(feature_vector)
+                    # concatenate eeg, eye, fix_delay
+                    feature_vector = np.concatenate((eeg_feat, eye_feat, [fix_delay]), axis=0).reshape(1, -1)
 
-            classifier.send_nah_label_to_ai(prediction)
-            
-            print("Prediction sent to AI: ", prediction)
+                    # pred
+                    prediction, probs_target_class, score = classifier.predict(feature_vector)
 
-            # Set the flag to indicate the code has been executed
-            has_executed = True
+                    print(f'Classifier stuff {prediction}, {probs_target_class}, {score}')
+                    
+                    # Map probs_target_class to an int value in the range 1 to 5
+                    mapped_label = max(1, int(np.ceil(probs_target_class * 5)))
+
+                    classifier.send_nah_label_to_ai(mapped_label)
+                    
+                    print("Label sent to AI: ", mapped_label)
