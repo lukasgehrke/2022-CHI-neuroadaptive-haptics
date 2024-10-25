@@ -1,5 +1,13 @@
 # 2022-CHI-neuroadaptive-haptics
 
+# Launch dev environment
+
+1. Open command prompt (Win + R)
+2. Run `code "D:\Lukas\2022-CHI-neuroadaptive-haptics" "D:\Lukas\2022-CHI-neuroadaptive-haptics\run_experiment_dev.ipynb"`
+3. Make sure you're on the correct branch `aleks-lab` (check in the bottom left corner)
+4. Press `Run All` in the notebook that opens
+5. In the VSCode that opens the unity project, make sure you're on the correct branch `aleks-nah`
+
 # Experiment setup steps
 
 1. Use VIVE Pro Eye 3
