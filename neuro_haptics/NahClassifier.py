@@ -5,6 +5,8 @@ import mne
 from sklearn.impute import SimpleImputer
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 
+import concurrent.futures
+
 class NahClassifier:
     def __init__(self, model_path):
 
@@ -91,45 +93,51 @@ class NahClassifier:
 
         return prediction, probs_target_class, score
         
-    def discretize(self, prediction, probability, score):
+    def discretize(self, prediction, score):
 
-        if prediction == self.target_class:
+        # if prediction == self.target_class:
 
-            # find the boundaries for the classifier
-            for i, boundary in enumerate(self.boundaries):
-                if score < boundary:
-                    bin = i
-                    break
+        # find the boundaries for the classifier
+        for i, boundary in enumerate(self.boundaries):
+            if score < boundary:
+                bin = i
+                break
 
         return bin
         
-    def get_data(self):
+    def get_data(self, type):
 
-        # Initialize an empty list to store the pulled samples
-        all_eeg_data = []
-        all_eye_data = []
+        if type == 'eeg':
+            all_eeg_data = np.empty((0, 64))
+        elif type == 'eye':
+            all_eye_data = np.empty((0, 11))
+        elif type == 'marker':
+            fix_delay = 0
 
-        # Continue pulling data until we have exactly 250 samples
-        fix_delay = 0
-        grab_time = time.time()
+        # Continue pulling data until we have exactly 1s of samples
+        pull_time = time.time()
+        while time.time() - pull_time < 1.0: # 1 second window to grab data
 
-        # Cannot test this right now because only restreaming one stream at a time and not all three in parallel in my test environment
-        while len(all_eeg_data) < 108:
-            eeg_data, _ = self.eeg_inlet.pull_chunk(timeout=0.0, max_samples=108 - len(all_eeg_data))
-            all_eeg_data.extend(eeg_data)
-            
-            eye_data, _ = self.eye_inlet.pull_chunk(timeout=0.0, max_samples=108 - len(all_eye_data))
-            all_eye_data.extend(eye_data)
+            # Pull data
+            if type == 'eeg':
+                eeg_data, _ = self.eeg_inlet.pull_sample(timeout=0.1)
+                eeg_data = np.array(eeg_data).reshape(1, -1)
+                all_eeg_data = np.vstack([all_eeg_data, eeg_data])
+            elif type == 'eye':
+                eye_data, _ = self.eye_inlet.pull_sample(timeout=0.1)
+                eye_data = np.array(eye_data).reshape(1, -1)
+                all_eye_data = np.vstack([all_eye_data, eye_data])
+            elif type == 'marker':
+                marker_sample, _ = self.marker_inlet.pull_sample(timeout=0.1)
+                if marker_sample and 'focus:in;object: PlacementPos' in marker_sample[0]:
+                    fix_delay = time.time() - pull_time
 
-            marker_sample, _ = self.marker_inlet.pull_sample(timeout=0.0)
-            if marker_sample and 'focus:in;object: PlacementPos' in marker_sample[0]:
-                fix_delay = time.time() - grab_time
-
-        # Convert the list to a numpy array
-        eeg_data = np.array(all_eeg_data).T
-        eye_data = np.array(all_eye_data).T
-
-        return eeg_data , eye_data, fix_delay
+        if type == 'eeg':
+            return all_eeg_data.T
+        elif type == 'eye':
+            return all_eye_data.T
+        elif type == 'marker':
+            return fix_delay
 
     def compute_features(self, data, modality):
         
@@ -213,20 +221,33 @@ class NahClassifier:
 
             return gaze_features
 
-    # def choose_nah_label(self):
+    def choose_nah_label(self):
 
-    #     # Get the data
-    #     data = self.get_data()
+        # this needs to pull data directly after the grab marker
+        # needs to pull exactly 108 samples for eeg
 
-    #     # Compute the features
-    #     features = self.compute_features(data)
+        while True:
+            tic = time.time()
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                eeg = executor.submit(self.get_data, 'eeg')
+                eye = executor.submit(self.get_data, 'eye')
+                #fix_delay = self.get_data('marker')
+            print(f"EEG data shape: {eeg.result().shape}, Eye data shape: {eye.result().shape}")
+            toc = time.time()
+            print(toc - tic)
+    
 
-    #     # Predict the class
-    #     prediction = self.predict(features)
+        eeg_feat = classifier.compute_features(eeg, 'eeg') # this needs to pull data directly after the grab marker
+        eye_feat = classifier.compute_features(eye, 'eye') # this needs to pull data directly after the grab marker
 
-    #     discrete_prediction = self.discretize(prediction)
+        feature_vector = np.concatenate((eeg_feat, eye_feat, [fix_delay]), axis=0).reshape(1, -1)
 
-    #     return prediction
+        # Predict the class
+        prediction, probs_target_class, score = classifier.predict(feature_vector)
+
+        discrete_prediction = self.discretize(prediction, score)
+
+        return discrete_prediction
     
     def send_nah_label_to_ai(self, prediction):
         
@@ -237,7 +258,6 @@ class NahClassifier:
         # to only listen to the prediction at a certain time?
         prediction = str(prediction)
         self.labels.push_sample(prediction)
-
 
 
 # main
@@ -253,56 +273,63 @@ if __name__ == "__main__":
     
     classifier = NahClassifier(model_path)
 
-    last_grab_number = -1
-
-    start_print_time = time.time()
-    last_print_time = start_print_time
-    
     while True:
-        current_time = time.time()
-        if current_time - last_print_time >= 1:
-            elapsed_time = current_time - start_print_time
-            minutes, seconds = divmod(int(elapsed_time), 60)
-            formatted_time = f"{minutes:02}:{seconds:02}"
-            print(f"{formatted_time} - Waiting for grab marker...")
-            last_print_time = current_time
 
-        marker = classifier.marker_inlet.pull_sample()[0]
+        tic = time.time()
+        choose_label = classifier.choose_nah_label()
+        print(choose_label)
+        print(f"Time to choose label: {time.time() - tic}")
 
-        # what if there are two grab markers
-        if marker and 'What:' in marker[0]:
-            marker_data = marker[0].split(';')
-            marker_dict = {item.split(':')[0]: item.split(':')[1] for item in marker_data}
-            what = marker_dict.get('What')
+    # last_grab_number = -1
+
+    # start_print_time = time.time()
+    # last_print_time = start_print_time
+    
+    # while True:
+    #     current_time = time.time()
+    #     if current_time - last_print_time >= 1:
+    #         elapsed_time = current_time - start_print_time
+    #         minutes, seconds = divmod(int(elapsed_time), 60)
+    #         formatted_time = f"{minutes:02}:{seconds:02}"
+    #         print(f"{formatted_time} - Waiting for grab marker...")
+    #         last_print_time = current_time
+
+    #     marker = classifier.marker_inlet.pull_sample()[0]
+
+    #     # what if there are two grab markers
+    #     if marker and 'What:' in marker[0]:
+    #         marker_data = marker[0].split(';')
+    #         marker_dict = {item.split(':')[0]: item.split(':')[1] for item in marker_data}
+    #         what = marker_dict.get('What')
             
-            if what == 'grab':
-                current_grab_number = int(marker_dict.get('Number', 0))
+    #         if what == 'grab':
+    #             current_grab_number = int(marker_dict.get('Number', 0))
 
-                if current_grab_number > last_grab_number:           
-                    print(f"Grab {current_grab_number} detected: ", marker)
+    #             if current_grab_number > last_grab_number:           
+    #                 print(f"Grab {current_grab_number} detected: ", marker)
 
-                    eeg, eye, fix_delay = classifier.get_data()
+    #                 eeg, eye, fix_delay = classifier.get_data()
                     
-                    eeg_feat = classifier.compute_features(eeg, 'eeg')
-                    eye_feat = classifier.compute_features(eye, 'eye')
+    #                 eeg_feat = classifier.compute_features(eeg, 'eeg')
+    #                 eye_feat = classifier.compute_features(eye, 'eye')
 
-                    # for tests
-                    # eeg = classifier.get_data()
-                    # eye = classifier.get_data()            
-                    # eye_feat = np.zeros(8)
-                    # test_fix_delay = np.array([0.4])
+    #                 # for tests
+    #                 # eeg = classifier.get_data()
+    #                 # eye = classifier.get_data()            
+    #                 # eye_feat = np.zeros(8)
+    #                 # test_fix_delay = np.array([0.4])
 
-                    # concatenate eeg, eye, fix_delay
-                    feature_vector = np.concatenate((eeg_feat, eye_feat, [fix_delay]), axis=0).reshape(1, -1)
+    #                 # concatenate eeg, eye, fix_delay
+    #                 feature_vector = np.concatenate((eeg_feat, eye_feat, [fix_delay]), axis=0).reshape(1, -1)
 
-                    # pred
-                    prediction, probs_target_class, score = classifier.predict(feature_vector)
+    #                 # pred
+    #                 prediction, probs_target_class, score = classifier.predict(feature_vector)
 
-                    print(f'Classifier stuff {prediction}, {probs_target_class}, {score}')
+    #                 print(f'Classifier stuff {prediction}, {probs_target_class}, {score}')
                     
-                    # Map probs_target_class to an int value in the range 1 to 5
-                    mapped_label = max(1, int(np.ceil(probs_target_class * 5)))
+    #                 # Map probs_target_class to an int value in the range 1 to 5
+    #                 mapped_label = max(1, int(np.ceil(probs_target_class * 5)))
 
-                    classifier.send_nah_label_to_ai(mapped_label)
+    #                 classifier.send_nah_label_to_ai(mapped_label)
                     
-                    print("Label sent to AI: ", mapped_label)
+    #                 print("Label sent to AI: ", mapped_label)
