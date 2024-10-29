@@ -3,15 +3,15 @@ from scipy import stats
 
 def windowed_mean(data, srate, window_size):
     
+    n_windows = int(np.floor(1000 / window_size)) # int(np.floor(srate / window_size))
     window_size = int(np.floor(window_size * 0.001 * srate)) # ms to samples
-    n_windows = int(np.floor(srate / window_size))
 
     if len(data.shape) < 3:
-        baseline = data[0:window_size,:].mean(axis=0)
-        data = data[0:n_windows*window_size,:]
-        data = data - baseline[None,:]
-        reshaped = data.reshape(n_windows, window_size, data.shape[-1])
-        windowed_mean = reshaped.mean(axis=1)
+        baseline = data[:,0:window_size].mean(axis=1)
+        data = data[:,0:n_windows*window_size]
+        data = data - baseline[:,None]
+        reshaped = data.reshape(data.shape[0], n_windows, window_size)
+        windowed_mean = reshaped.mean(axis=-1)
     else:
         baseline = data[:,0:window_size,:].mean(axis=1)
         data = data[:,0:n_windows*window_size,:]
