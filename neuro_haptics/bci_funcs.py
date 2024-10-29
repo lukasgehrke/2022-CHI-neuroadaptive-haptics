@@ -1,19 +1,59 @@
 import numpy as np
 from scipy import stats
 
-def windowed_mean(data, n_windows = 10):
-    """Computes windowed mean of data
+def windowed_mean(data, srate, window_size):
+    
+    window_size = int(np.floor(window_size * 0.001 * srate)) # ms to samples
+    n_windows = int(np.floor(srate / window_size))
 
-    Args:
-        data (_type_): 2D array, usually chans x time
-        windows (int, optional): Number of windows data is split into . Defaults to 10.
+    if len(data.shape) < 3:
+        baseline = data[0:window_size,:].mean(axis=0)
+        data = data[0:n_windows*window_size,:]
+        data = data - baseline[None,:]
+        reshaped = data.reshape(n_windows, window_size, data.shape[-1])
+        windowed_mean = reshaped.mean(axis=1)
+    else:
+        baseline = data[:,0:window_size,:].mean(axis=1)
+        data = data[:,0:n_windows*window_size,:]
+        data = data - baseline[:,np.newaxis,:]
+        reshaped = data.reshape(data.shape[0], n_windows, window_size, data.shape[2])
+        windowed_mean = reshaped.mean(axis=2)
 
-    Returns:
-        _type_: Windowed mean of data, of shape chans x n_windows
-    """
-    stepsize = data.shape[1] // n_windows
-    win_data = np.reshape(data, (data.shape[0], n_windows, stepsize))
-    return np.mean(win_data, axis = 2)
+    return windowed_mean
+
+# TODO fix this with real-time data
+def compute_gaze_velocity(data, srate, window_size, gaze_direction_chans, gaze_validity_chan):
+
+    window_size = int(np.floor(window_size * 0.001 * srate)) # ms to samples
+    n_windows = int(np.floor(srate / window_size))
+
+    data = data[0:n_windows*window_size,:]
+
+    gaze_velocity = np.zeros((data.shape[0], data.shape[1] - 1))
+
+    tmp = np.diff(data[gaze_direction_chans, :], axis=1)
+    gaze_velocity = np.sqrt(np.sum(tmp**2, axis=0))
+
+    invalid_samples = data[gaze_validity_chan, :-1] == 1
+    gaze_velocity[invalid_samples] = np.nan
+    # repeat last value to keep the same length
+    gaze_velocity = np.append(gaze_velocity, gaze_velocity[-1])
+    
+    return gaze_velocity
+
+# def windowed_mean(data, n_windows = 10):
+#     """Computes windowed mean of data
+
+#     Args:
+#         data (_type_): 2D array, usually chans x time
+#         windows (int, optional): Number of windows data is split into . Defaults to 10.
+
+#     Returns:
+#         _type_: Windowed mean of data, of shape chans x n_windows
+#     """
+#     stepsize = data.shape[1] // n_windows
+#     win_data = np.reshape(data, (data.shape[0], n_windows, stepsize))
+#     return np.mean(win_data, axis = 2)
 
 def select_mean(data, n_windows, window):
     """_summary_

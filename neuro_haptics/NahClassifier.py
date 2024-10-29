@@ -4,6 +4,7 @@ import numpy as np
 import mne
 from sklearn.impute import SimpleImputer
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+from bci_funcs import windowed_mean, compute_gaze_velocity
 
 import concurrent.futures
 
@@ -143,49 +144,28 @@ class NahClassifier:
         
         # mne_data = mne.io.RawArray(data.T, self.mne_raw_info) # ! if MNE object is needed for feature extraction
 
-        # data indeces for baseline correction
-        baseline_start = 0
-        baseline_end = 12
-
-        # windows and window size for feature extraction
-        num_windows = 8
-        window_size = 12
-
-        # channels for eye data
-        gaze_direction_chans = np.arange(2,5)
-        gaze_validity_chan = 10
+        window_size = 50 # ms
 
         # eeg processing and feature extraction
         if modality == 'eeg':
+
+            srate = 250
+            windowed_means = windowed_mean(data, srate, window_size)
             
-            # Filter the data, data will be 64 channels x 250 samples
-            # data = self.filter_data(data)
+            # select features of interest
+            windowed_mean = windowed_mean[:,1:9].flatten()
 
-            # baseline correction
-            baseline = data[:,baseline_start:baseline_end].mean(axis=1)
-            data = data - baseline[:,None]
-
-            # discard baseline
-            data = data[:,baseline_end:]
-
-            # Compute the features
-            reshaped_erp = data.reshape(data.shape[0], num_windows, window_size)
-            eeg_features = reshaped_erp.mean(axis=2).flatten() #.reshape(1,-1)
-
-            return eeg_features
+            return windowed_mean
 
         # eye processing and feature extraction
         elif modality == 'eye':
 
-            gaze_velocity = np.zeros((data.shape[0], data.shape[1] - 1))
+            # channels for eye data
+            gaze_direction_chans = np.arange(2,5)
+            gaze_validity_chan = 10
 
-            tmp = np.diff(data[gaze_direction_chans, :], axis=1)
-            gaze_velocity = np.sqrt(np.sum(tmp**2, axis=0))
-
-            invalid_samples = data[gaze_validity_chan, :-1] == 1
-            gaze_velocity[invalid_samples] = np.nan
-            # repead last value to keep the same length
-            gaze_velocity = np.append(gaze_velocity, gaze_velocity[-1])
+            # Use the function in the compute_features method
+            gaze_velocity = compute_gaze_velocity(data, gaze_direction_chans, gaze_validity_chan)
 
             # Example: Compute windowed means
             gaze_velocity = gaze_velocity[baseline_end:]
@@ -226,17 +206,16 @@ class NahClassifier:
         # this needs to pull data directly after the grab marker
         # needs to pull exactly 108 samples for eeg
 
-        while True:
-            tic = time.time()
-            with concurrent.futures.ThreadPoolExecutor() as executor:
-                eeg = executor.submit(self.get_data, 'eeg')
-                eye = executor.submit(self.get_data, 'eye')
-                #fix_delay = self.get_data('marker')
-            print(f"EEG data shape: {eeg.result().shape}, Eye data shape: {eye.result().shape}")
-            toc = time.time()
-            print(toc - tic)
-    
+        tic = time.time()
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            eeg = executor.submit(self.get_data, 'eeg')
+            eye = executor.submit(self.get_data, 'eye')
+            fix_delay = self.get_data('marker')
+        print(f"EEG data shape: {eeg.result().shape}, Eye data shape: {eye.result().shape}")
+        toc = time.time()
+        print(toc - tic)
 
+        # compute features and predict    
         eeg_feat = classifier.compute_features(eeg, 'eeg') # this needs to pull data directly after the grab marker
         eye_feat = classifier.compute_features(eye, 'eye') # this needs to pull data directly after the grab marker
 
@@ -280,6 +259,7 @@ if __name__ == "__main__":
         print(choose_label)
         print(f"Time to choose label: {time.time() - tic}")
 
+    # TODO clean this up? but the -1 here had some logic, ask aleks
     # last_grab_number = -1
 
     # start_print_time = time.time()
