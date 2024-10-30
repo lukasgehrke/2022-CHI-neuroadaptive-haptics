@@ -34,8 +34,8 @@ def compute_gaze_velocity(data, srate, window_size, gaze_direction_chans, gaze_v
     tmp = np.diff(data[gaze_direction_chans, :], axis=1)
     gaze_velocity = np.sqrt(np.sum(tmp**2, axis=0))
 
-    invalid_samples = data[gaze_validity_chan, :-1] == 1
-    gaze_velocity[invalid_samples] = np.nan
+    # invalid_samples = data[gaze_validity_chan, :-1] == 1
+    # gaze_velocity[invalid_samples] = 0 # np.nan
     # repeat last value to keep the same length
     gaze_velocity = np.append(gaze_velocity, gaze_velocity[-1])
     

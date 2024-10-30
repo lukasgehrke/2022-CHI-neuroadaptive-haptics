@@ -124,9 +124,9 @@ for subject = subjects
     for i = 1:size(EYE.epoch,2)
         tmp = diff(gaze(gaze_direction_chans,:,i),1,2);
         gaze_velocity(i,:) = sqrt(sum(tmp.^2));
-
-        invalid_samples = gaze(validity_channel,1:end-1,i) == 1;
-        gaze_velocity(i,invalid_samples) = nan;
+        
+%         invalid_samples = gaze(validity_channel,1:end-1,i) == 1;
+%         gaze_velocity(i,invalid_samples) = nan;
     end
 
     save(strcat(strcat(out_path, filesep), 'gaze_velocity', '.mat'), 'gaze_velocity');
