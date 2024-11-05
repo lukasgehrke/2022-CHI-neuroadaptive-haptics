@@ -26,16 +26,17 @@
     % Nodes positioned equidistantly
     \node[entity] (ai) at (0,0) {RL Agent};
     \node[entity] (unity) at (8,0) {Unity};
-    % \node[entity] (bci) at (0,8) {BCI};
-    % \node[entity] (eeg) at (8,8) {EEG};
+    \node[entity] (eeg) at (8,6) {EEG System};
+    \node[entity] (store) at (12, 3) {store};
+
 
     % Arrows
     \draw[-{Latex[length=3mm]}, orange] (ai) to[out=-45, in=225] node[midway, below, text=black] {Feedback profile id} (unity);
     \draw[-{Latex[length=3mm]}, olive] (unity) to[out=135, in=45] node[midway, above, text=black] {Questionnaire answer} (ai);
-    % \draw[-{Latex[length=3mm]}, gray] (eeg) -- node[above, text=black] {BrainVision RDA} (bci);
-    % \draw[-{Latex[length=3mm]}, gray] (bci) -- node[above left, text=black] {Reward (implicit)} (ai);
-    % \draw[-{Latex[length=3mm]}, gray] (unity) -- node[left, text=black] {NAH\_Unity3DEvents} (bci);
-    % \draw[-{Latex[length=3mm]}, gray] ([xshift=1cm]unity.north) -- node[above right, text=black] {NAH\_GazeBehavior} (bci.east);
+    \draw[-{Latex[length=3mm]}, gray] (eeg) -- node[above, text=black] {EEG Data} (store); % BrainVision RDA
+    \draw[-{Latex[length=3mm]}, gray] (unity.north) -- node[left, text=black] {3D events} (store); % NAH_Unity3DEvents
+    \draw[-{Latex[length=3mm]}, gray] (unity) -- node[above right, text=black] {Gaze behavior} (store.south); % NAH_GazeBehavior    
+
 
     \end{tikzpicture}
     \caption{Dataflow diagram for the explicit condition. From the perspective of the RL Agent, the green arrow represents the reward (Questionnaire answer) and the orange arrow represents the action (Feedback profile id).}
