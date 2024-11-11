@@ -14,4 +14,3 @@ neuro_haptics/__pycache__
 neuro_haptics/aleks/rl/logs
 docs/
 example_data/
-neuro_haptics/bci/signal_processing/data_checks.ipynb
