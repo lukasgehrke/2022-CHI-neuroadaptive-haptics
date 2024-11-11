@@ -12,3 +12,5 @@ main.synctex.gz
 neuro_haptics/aleks/logs
 neuro_haptics/__pycache__
 neuro_haptics/aleks/rl/logs
+docs/
+example_data/
