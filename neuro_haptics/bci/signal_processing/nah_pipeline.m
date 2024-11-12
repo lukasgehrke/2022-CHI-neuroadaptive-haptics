@@ -4,7 +4,7 @@
 % Classifier Output data
 
 %% config
-current_sys = "c060";
+current_sys = "mac"% "c060";
 eeglab_ver(current_sys);
 
 %% load configuration
@@ -12,7 +12,7 @@ nah_bemobil_config;
 
 % set to 1 if all files should be recomputed and overwritten
 force_recompute = 1;
-subjects = 1; % [1:7]; % 1
+subjects = 4; % [1:7]; % 1
 
 %% preprocess
 
@@ -38,53 +38,58 @@ for subject = subjects
     EEG = pop_loadset([bemobil_config.study_folder filesep ...
         bemobil_config.raw_EEGLAB_data_folder filesep ...
         'sub-' num2str(subject) filesep 'sub-' num2str(subject) '_' ...
-        bemobil_config.merged_filename]); % eye components rejected
+        bemobil_config.merged_filename]);
     
     EYE = pop_loadset([bemobil_config.study_folder filesep ...
         bemobil_config.raw_EEGLAB_data_folder filesep ...
         'sub-' num2str(subject) filesep 'sub-' num2str(subject) '_' ...
-        bemobil_config.merged_physio_filename]); % eye components rejected
+        bemobil_config.merged_physio_filename]);
 
-    events = {EEG.event.type}';
-    all_lats = {EEG.event.latency}';
+    Motion = pop_loadset([bemobil_config.study_folder filesep ...
+        bemobil_config.raw_EEGLAB_data_folder filesep ...
+        'sub-' num2str(subject) filesep 'sub-' num2str(subject) '_' ...
+        bemobil_config.merged_motion_filename]);
+
+    event_of_int = 'What:grab';
 
     %% dmatrix questionnaire answers and grab events
 
-    % grab events, add grab latency to event matrix
-    grabs = find(contains(events, 'What:grab'));
+    events = EEG.event;
+    types = {events.type}';
+    grabs = find(contains(types, event_of_int));
     grab_events = events(grabs);
-    [C,IA,IC] = unique(grab_events);
-    ixs = grabs(sort(IA)); % IA is first index of uniques    
-    grab_events = events(ixs);
-    lats = all_lats(ixs);
-    
     grab_events = nah_parse_events(grab_events);
     event_table = struct2table(grab_events);
-    event_table.latency = lats;
+    [~, unique_idx] = unique(event_table.Number, 'stable');
+    event_table = event_table(unique_idx, :);
 
     % append questionnaire results
-    quest = find(contains(events, 'What:end'));
+    quest = find(contains(types, 'What:end'));
     quest_events = events(quest);
     quest_events = nah_parse_events(quest_events);
     quest_table = struct2table(quest_events);
     quest_table = quest_table(:, {'answerID'});
 
     % placement accuracy
-    pa_ixs = find(contains(events, 'What:placement'));
-    pa_ixs = pa_ixs(sort(IA)); % IA is first index of uniques
+    pa_ixs = find(contains(types, 'What:placement'));
     place_events = events(pa_ixs);
     place_events = nah_parse_events(place_events);
     pa_table = struct2table(place_events);
+    [~, unique_idx] = unique(pa_table.Number, 'stable');
+    pa_table = pa_table(unique_idx, :);
     pa_table = pa_table(:, {'AccuracyCm'});
 
-    %% Find bad epochs
+    %% Epoching and finding bad epochs
 
-    EEG.event = EEG.event(ixs);
-    [EEG.event.type] = deal('grab');
-    EEG = pop_epoch( EEG, {  'grab'  }, [-1  2], 'epochinfo', 'yes');
+    epoch_tw = [-1 2];
 
+    EEG.event = table2struct(event_table);
+    [EEG.event.type] = deal('event');
+    % copy over events
     EYE.event = EEG.event;
-    EYE = pop_epoch( EYE, {  'grab'  }, [-1  2], 'epochinfo', 'yes');
+    Motion.event = EEG.event;
+
+    EEG = pop_epoch( EEG, {  'event'  }, epoch_tw, 'epochinfo', 'yes');
 
     % clean
     [~, rmepochs] = pop_autorej(EEG, 'nogui', 'on');
@@ -93,16 +98,16 @@ for subject = subjects
     event_table.bad_epoch = zeros(height(event_table), 1);
     event_table.bad_epoch(rmepochs) = 1;
 
-    %% Features
+    %% Features: Events
 
-    % Fixations: find first fixation on target object after grab event
-    fix_events = find(contains(events, 'focus:in;object: PlacementPos'));
-    fix_lats = all_lats(fix_events);
+    % Feature: First intersection of gaze with target location
+    fix_events = find(contains(types, 'focus:in;object: PlacementPos'));
+    fix_lats = [events(fix_events).latency];
 
     for i = 1:size(event_table,1)
-        grab = event_table.latency{i};
-        first_fix_after_grab_ix = min((find((cell2mat(fix_lats) - grab > 0) == 1)));
-        fix_delay(i) = (fix_lats{first_fix_after_grab_ix} - grab) / EEG.srate;
+        grab = event_table.latency(i);
+        first_fix_after_grab_ix = min((find((fix_lats - grab > 0) == 1)));
+        fix_delay(i) = (fix_lats(first_fix_after_grab_ix) - grab) / EEG.srate;
     end
     fix_delay = fix_delay';
     fix_delay = table(fix_delay);
@@ -111,26 +116,45 @@ for subject = subjects
     writetable(behavior, strcat(out_path, filesep, sprintf('behavior_s%d.csv', subject)), 'Delimiter', ';');
     clear fix_delay
 
-    %% ERP:
-    
-    erp = EEG.data(:,250:500,:);
+    %% Features: Time Series
+
+    % Feature: ERP
+    erp = EEG.data;
     save(strcat(out_path, filesep, 'erp', '.mat'), 'erp');
 
-    % Gaze velocity
-    gaze = EYE.data(:,250:500,:);
-    gaze_direction_chans = find(contains({EYE.chanlocs.labels}, 'GazeDirection'));
+    % Feature: Hand Velocity
+    cart_chans = find(contains({Motion.chanlocs.labels}, 'NAH_rb_handRight_cart'));
+    x_diff = diff(Motion.data(cart_chans(1),:));
+    y_diff = diff(Motion.data(cart_chans(2),:));
+    z_diff = diff(Motion.data(cart_chans(3),:));
+    time_diff = diff(Motion.times);
+    velocity = sqrt(x_diff.^2 + y_diff.^2 + z_diff.^2) ./ time_diff;
+    Motion.data(1,:) = [velocity, mean(velocity)];
+
+    Motion = pop_epoch( Motion, {  'event'  }, epoch_tw, 'epochinfo', 'yes');
+    hand_velocity = squeeze(Motion.data(1,:,:));
+    save(strcat(out_path, filesep, 'hand_velocity', '.mat'), 'hand_velocity');
+
+    % Feature: Gaze velocity for fixation detection?
+    cart_chans = find(contains({EYE.chanlocs.labels}, 'GazeDirection'));
+    x_diff = diff(EYE.data(cart_chans(1),:));
+    y_diff = diff(EYE.data(cart_chans(2),:));
+    z_diff = diff(EYE.data(cart_chans(3),:));
+    time_diff = diff(EYE.times);
+    gaze_velocity = sqrt(x_diff.^2 + y_diff.^2 + z_diff.^2) ./ time_diff;
+    EYE.data(1,:) = [gaze_velocity, mean(gaze_velocity)];
+
     validity_channel = find(contains({EYE.chanlocs.labels}', 'DataValidity'));
+    invalid_samples = EYE.data(validity_channel,:) == 1;
+    EYE.data(1,invalid_samples) = 0;
 
-    for i = 1:size(EYE.epoch,2)
-        tmp = diff(gaze(gaze_direction_chans,:,i),1,2);
-        gaze_velocity(i,:) = sqrt(sum(tmp.^2));
-        
-%         invalid_samples = gaze(validity_channel,1:end-1,i) == 1;
-%         gaze_velocity(i,invalid_samples) = nan;
-    end
+    EYE = pop_epoch( EYE, {  'event'  }, epoch_tw, 'epochinfo', 'yes');
+    gaze_velocity = squeeze(EYE.data(1,:,:));
+    save(strcat(out_path, filesep, 'gaze_velocity', '.mat'), 'gaze_velocity');
 
-    save(strcat(strcat(out_path, filesep), 'gaze_velocity', '.mat'), 'gaze_velocity');
-    clear gaze_velocity
+    % EYE = pop_epoch( EYE, {  'event'  }, [-1  2], 'epochinfo', 'yes');
+    % save(strcat(strcat(out_path, filesep), 'gaze_velocity', '.mat'), 'gaze_velocity');
+    % clear gaze_velocity
 
     %% EEG: channel ERSP
     
