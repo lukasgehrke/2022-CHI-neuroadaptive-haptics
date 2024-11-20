@@ -33,18 +33,11 @@ parser.add_argument("-t", "--TimeOut", help = "Stop script after n seconds")
 args = parser.parse_args()
 # timeOut = float(args.TimeOut) if bool(args.TimeOut) else 1.69
 timeOut = None
-max_steps = 120
+
+agent = UCBQAgent()
 
 params = default_params()
-agent = UCBQAgent()
-# TODO: explore this
-# Episode rewards: -1729
-# agent = UCBQAgent(params=optimized_params)
-# Episode rewards: -35802
-
-# from rl.thompson_sampling_agent import ThompsonSamplingAgentTemporaryWrapper
-# agent = ThompsonSamplingAgentTemporaryWrapper()
-# Episode rewards: -33
+max_steps = params.get('max_steps', 120)
 
 from rl.ucbq_environment_stateless import ModifiedRandomEnvironment
 env = ModifiedRandomEnvironment()

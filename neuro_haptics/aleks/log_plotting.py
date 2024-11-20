@@ -13,7 +13,7 @@ def plot_q_values(df_plot_q_values, ax, initial_q_value=0):
                           color=line_colors)
     
     df_plot_q_values = df_plot_q_values.interpolate().fillna(initial_q_value)
-    for col in range(5):
+    for col in range(len(df_plot_q_values.columns)):
         if col not in df_plot_q_values.columns:
             df_plot_q_values[col] = initial_q_value
     df_plot_q_values.plot(ax=ax, 
@@ -47,8 +47,10 @@ def plot_q_learning_separate(df, ax):
     plot_q_values(df_plot_q_values, ax1, initial_q_value)
     plot_additional_metrics(df, ax2)
     
-    ax1.axvline(x=25, color='lightgray', linestyle='--', zorder=0)
-    ax2.axvline(x=25, color='lightgray', linestyle='--', zorder=0)
+    # Pre-emptive exploration
+    # ax1.axvline(x=25, color='lightgray', linestyle='--', zorder=0)
+    # ax2.axvline(x=25, color='lightgray', linestyle='--', zorder=0)
        
     handles1, labels1 = ax1.get_legend_handles_labels()
-    ax1.legend(handles1[:5], labels1[:5], fontsize='small')
+    num_actions = 4
+    ax1.legend(handles1[:num_actions], labels1[:num_actions], fontsize='small')

@@ -49,7 +49,7 @@ class UCBQEnvironmentLSL(ModifiedRandomEnvironment):
         self.environment_logger.info(f"{self.labels_stream_name} stream found.")
 
         # Delay to ensure Participant stream is ready
-        time.sleep(5)        
+        time.sleep(5)
         
     def send_feedback_to_participant_and_get_participant_answer(self, action):
         # We send the predicted `feedback` (action) to the participant and
@@ -84,7 +84,6 @@ class UCBQEnvironmentLSL(ModifiedRandomEnvironment):
         time.sleep(1)
 
         # Convert answer to format expected by the agent (negative values)
-        num_actions = 5
-        reward = answer - num_actions
+        reward = answer - self.num_actions
 
         return reward

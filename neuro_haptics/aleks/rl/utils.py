@@ -4,7 +4,7 @@ def default_params():
             # Runner parameters
             'max_steps': 120,
             'num_episodes': 100,
-            'num_actions': 7, 
+            'num_actions': 4, 
             'correct_action': 1,    # Zero indexed
             'convergence_count_start': 35,
             'convergence_consecutive_limit': 15,

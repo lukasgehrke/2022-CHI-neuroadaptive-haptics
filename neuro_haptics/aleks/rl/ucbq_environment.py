@@ -1,14 +1,14 @@
 import numpy as np
 
 class ModifiedRandomEnvironment:
-    def __init__(self, num_states=10, params={}):
+    def __init__(self, num_states=1, params={}):
         self.num_states = num_states
         # The last feedback level sent
         # np.random.seed(69)
         self.current_state = np.random.randint(num_states)
         
         # The total number of feedback levels        
-        self.num_actions = params.get('num_actions', 5)
+        self.num_actions = params.get('num_actions', 4)
 
         # TODO:
         # LSL here
