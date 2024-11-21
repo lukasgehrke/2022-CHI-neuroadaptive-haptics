@@ -131,8 +131,11 @@ class UCBQAgent:
         # Update reward list
         self.rewards[action].append(reward)
 
-        # Adjust reward
-        reward_adjusted, _ = Counter(self.rewards[action]).most_common(1)[0]
+        # # Adjust reward
+        # reward_adjusted, _ = Counter(self.rewards[action]).most_common(1)[0]
+
+        # TODO:
+        reward_adjusted = reward
 
         self.Q[state][action] = (1 - self.alpha) * self.Q[state][action] + self.alpha * (reward_adjusted + self.gamma * np.max(self.Q[next_state]))
         
