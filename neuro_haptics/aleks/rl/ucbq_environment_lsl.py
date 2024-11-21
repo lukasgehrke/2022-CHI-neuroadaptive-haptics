@@ -74,7 +74,7 @@ class UCBQEnvironmentLSL(ModifiedRandomEnvironment):
         # 3 (neither disagree nor agree)
         # 4 (agree)
         # 5 (strongly agree)
-        answer = int(incoming_sample[0][0])
+        answer = float(incoming_sample[0][0])
       
 
         # print(f"Received from Participant: {answer} at {timestamp[0]}")
@@ -84,6 +84,6 @@ class UCBQEnvironmentLSL(ModifiedRandomEnvironment):
         time.sleep(1)
 
         # Convert answer to format expected by the agent (negative values)
-        reward = answer - self.num_actions
+        reward = answer - 1.0
 
         return reward
