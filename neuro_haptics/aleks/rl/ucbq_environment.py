@@ -20,12 +20,18 @@ class ModifiedRandomEnvironment:
     # Old
     def send_feedback_to_participant_and_get_participant_answer(self, action):
         # Mock answers
+        # Assuming equally distributed means
         answer = 0 if action == self.correct_action else -abs(self.correct_action - action)
 
-        # Simulate noise
-        if np.random.rand() < 0.3:
-            answer += np.random.choice([-1, 1])
-        answer = np.clip(answer, -6, 0)        
+        answer *= 0.33
+
+        # # Simulate noise
+        # if np.random.rand() < 0.3:
+        #     answer += np.random.choice([-1, 1])
+        
+        answer += np.random.normal(0, 0.25)
+        
+        answer = np.clip(answer, -1., 0.)        
 
         return answer
 

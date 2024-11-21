@@ -69,3 +69,4 @@ while True:
     #     break
 
 utils.print_agent_stats(agent)
+print(f"Correct action: {env.correct_action}")
