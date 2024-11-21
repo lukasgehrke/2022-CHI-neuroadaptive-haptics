@@ -17,23 +17,19 @@ class ModifiedRandomEnvironment:
         # The "right" level of feedback
         self.correct_action = params.get('correct_action', 1)
 
-    # Old
-    def send_feedback_to_participant_and_get_participant_answer(self, action):
+    # "How correct was this action?"
+    def get_mock_response(self, action):
         # Mock answers
-        # Assuming equally distributed means
-        answer = 0 if action == self.correct_action else -abs(self.correct_action - action)
-
-        answer *= 0.33
-
-        # # Simulate noise
-        # if np.random.rand() < 0.3:
-        #     answer += np.random.choice([-1, 1])
+        # Assuming equally distributed means        
+        answer = 1 - abs(self.correct_action - action) * 0.33
         
-        answer += np.random.normal(0, 0.25)
-        
-        answer = np.clip(answer, -1., 0.)        
+        answer += np.random.normal(0, 0.25)        
+        answer = np.clip(answer, 0.0, 1.0)        
 
-        return answer
+        return answer 
+
+    def send_feedback_to_participant_and_get_participant_answer(self, action):
+        return self.get_mock_response(action)
 
     def step(self, action):
         reward = self.send_feedback_to_participant_and_get_participant_answer(action)
@@ -56,25 +52,4 @@ class ModifiedRandomEnvironment:
             response += np.random.choice([-1, 1])
         response = np.clip(response, -(num_actions-1), 0)
 
-        return response
-
-    def get_mock_response(ai_feedback_level):
-        num_actions = 5
-        action = ai_feedback_level
-        correct_action = 1
-
-        # Adjust for unity response
-        # 1 (completely disagree)
-        # 2 (disagree)
-        # 3 (neither disagree nor agree)
-        # 4 (agree)
-        # 5 (strongly agree)
-        response = 5 - abs(correct_action - action) 
-        
-        # Simulate noise
-        if np.random.rand() < 0.3:
-            response += np.random.choice([-1, 1])
-        response = np.clip(response, 1, num_actions)
-      
-
-        return response        
+        return response 

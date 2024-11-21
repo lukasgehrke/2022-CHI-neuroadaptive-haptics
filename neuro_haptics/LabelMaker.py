@@ -29,7 +29,7 @@ class LabelMaker(threading.Thread):
             
             # inlet for 'Explicit_Labels' LSL stream
             print("looking for a stream with explicit questionnaire labels...")
-            self.in_labels = StreamInlet(resolve_stream('name', 'Explicit_Labels')[0])
+            self.in_labels = StreamInlet(resolve_stream('name', 'labels')[0])
 
         elif label_origin == 'implicit':
 

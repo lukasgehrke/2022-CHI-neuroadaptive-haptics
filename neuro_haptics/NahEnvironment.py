@@ -29,7 +29,7 @@ class NahEnvironment():
 
         # !! This is just here to simulate the stream coming from the unity scene that sends the questionnaire answers after every trial
         if environment == 'explicit' and data_source == 'simulated':
-            self.sim_labels = StreamOutlet(StreamInfo('Explicit_Labels', 'Markers', 1, 0, 'string', 'myuid34234'))
+            self.sim_labels = StreamOutlet(StreamInfo('labels', 'Markers', 1, 0, 'string', 'myuid34234'))
             time.sleep(2)
         
             logging.info("Participant stream created.")
@@ -69,8 +69,8 @@ if __name__ == "__main__":
 
     # data_source = input("Real data or simulated data? Enter 'real' or 'simulated': ")
     # environment = input("Enter 'explicit' or 'implicit' for environment to be simulated: ")
-    # environment = 'explicit'
-    environment = 'implicit'
+    environment = 'explicit'
+    # environment = 'implicit'
     data_source = 'simulated'
 
     nah = NahEnvironment(data_source, environment)
@@ -91,6 +91,8 @@ if __name__ == "__main__":
 
     inlet = StreamInlet(streams[0])
     logging.info("AI stream found.")    
+
+    env = ModifiedRandomEnvironment()
     
     while True: # This will be then changed to wait for an experiment marker from the lsl marker stream coming from unity
 
@@ -107,7 +109,7 @@ if __name__ == "__main__":
                 ai_feedback_level = int(incoming_sample[0][0])
                 
                 # @Lukas: EEG classifier replaces this mock response                                
-                response = ModifiedRandomEnvironment.get_mock_response(ai_feedback_level)
+                response = env.get_mock_response(ai_feedback_level)
 
                 response = [str(response)]                
                 nah.sim_labels.push_chunk(response)
