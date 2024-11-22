@@ -42,29 +42,29 @@ class NahClassifier:
             self.eeg_inlet = StreamInlet(streams[0])
 
             
-            print("Looking for EYE stream...")
-            streams = resolve_byprop('name', 'NAH_GazeBehavior')
+            # print("Looking for EYE stream...")
+            # streams = resolve_byprop('name', 'NAH_GazeBehavior')
             
-            if not streams:
-                print("No EEG stream found, retrying...")
-                time.sleep(1)
+            # if not streams:
+            #     print("No EEG stream found, retrying...")
+            #     time.sleep(1)
 
-            print("EYE stream found!")
+            # print("EYE stream found!")
 
-            # init EYE stream inlet
-            self.eye_inlet = StreamInlet(streams[0])
+            # # init EYE stream inlet
+            # self.eye_inlet = StreamInlet(streams[0])
 
                         
-            print("Looking for Marker stream...")
-            streams = resolve_byprop('name', 'NAH_Unity3DEvents')
-            if not streams:
-                print("No EEG stream found, retrying...")
-                time.sleep(1)
+            # print("Looking for Marker stream...")
+            # streams = resolve_byprop('name', 'NAH_Unity3DEvents')
+            # if not streams:
+            #     print("No EEG stream found, retrying...")
+            #     time.sleep(1)
 
             
-            print("Marker stream found!")
-            # init marker stream inlet
-            self.marker_inlet = StreamInlet(streams[0])
+            # print("Marker stream found!")
+            # # init marker stream inlet
+            # self.marker_inlet = StreamInlet(streams[0])
 
         # set up outlet for sending predictions
         self.labels = StreamOutlet(StreamInfo('labels', 'Markers', 1, 0, 'string', 'myuid34234'))
@@ -98,7 +98,10 @@ class NahClassifier:
             if score < boundary:
                 bin = i
                 break
+            else:
+                bin = len(self.boundaries)
 
+        bin += 1        
         return bin
         
     def get_data(self, type):
@@ -150,10 +153,12 @@ class NahClassifier:
         # eeg processing and feature extraction
         if modality == 'eeg':
 
-            srate = 250
-            windowed_means = windowed_mean(data, srate, window_size)
-            
-            # select features of interest
+            last_sample = 108
+            erp_selected = data[:,0:last_sample]
+            erp_selected = erp_selected.reshape(erp_selected.shape[0], 9, 12)
+            windowed_means = np.mean(erp_selected, axis=2)
+            baseline = windowed_means[:,0]
+            windowed_means = windowed_means - baseline[:,np.newaxis] # correct for baseline
             windowed_means = windowed_means[:,1:9].flatten()
 
             return windowed_means
@@ -170,6 +175,7 @@ class NahClassifier:
             # Use the function in the compute_features method
             gaze_velocity = compute_gaze_velocity(data, srate, window_size, gaze_direction_chans, gaze_validity_chan)
             gaze_velocity = np.expand_dims(gaze_velocity, axis=0)
+
             windowed_means = windowed_mean(gaze_velocity, srate, window_size)
             windowed_means = windowed_means[:,1:9].flatten()
 
@@ -181,17 +187,25 @@ class NahClassifier:
         tic = time.time()
         with concurrent.futures.ThreadPoolExecutor() as executor:
             eeg = executor.submit(self.get_data, 'eeg')
-            eye = executor.submit(self.get_data, 'eye')
-            fix_delay = executor.submit(self.get_data, 'marker')
+            # eye = executor.submit(self.get_data, 'eye')
+            # fix_delay = executor.submit(self.get_data, 'marker')
         toc = time.time()
         print(toc - tic)
 
         # compute features and predict    
         eeg_feat = classifier.compute_features(eeg.result(), 'eeg') # this needs to pull data directly after the grab marker
-        eye_feat = classifier.compute_features(eye.result(), 'eye') # this needs to pull data directly after the grab marker
+        # eye_feat = classifier.compute_features(eye.result(), 'eye') # this needs to pull data directly after the grab marker
 
-        feature_vector = np.concatenate((eeg_feat, eye_feat, [fix_delay.result()]), axis=0).reshape(1, -1)
+        # feature_vector = np.concatenate((eeg_feat, eye_feat, [fix_delay.result()]), axis=0).reshape(1, -1)
+        feature_vector = eeg_feat.reshape(1, -1)
+        print(np.round(feature_vector[0,0:10],2))
         prediction, probs_target_class, score = classifier.predict(feature_vector)
+        
+        # Print the formatted output
+        print(f"Prediction: {prediction}")
+        print(f"Probability of Target Class: {probs_target_class:.4f}")
+        print(f"Score: {score:.4f}")
+
         discrete_prediction = self.discretize(score)
 
         return discrete_prediction
@@ -209,11 +223,11 @@ class NahClassifier:
 # main
 if __name__ == "__main__":
 
-    id = 1
+    id = 4
     pID = 'sub-' + "%01d" % (id)
     # path = '/Volumes/Lukas_Gehrke/NAH/data/5_single-subject-EEG-analysis'
-    # path = '/Users/lukasgehrke/data/NAH/data/5_single-subject-EEG-analysis/'
-    path = r'P:\Lukas_Gehrke\NAH\data\5_single-subject-EEG-analysis'
+    path = '/Users/lukasgehrke/data/NAH/data/5_single-subject-EEG-analysis/'
+    # path = r'P:\Lukas_Gehrke\NAH\data\5_single-subject-EEG-analysis'
 
     model_path = path+os.sep+pID+os.sep+'model.sav'
     
@@ -235,12 +249,12 @@ if __name__ == "__main__":
         #     print(f"{formatted_time} - Waiting for grab marker...")
         #     last_print_time = current_time
 
-        marker = classifier.marker_inlet.pull_sample()[0]
-        print(marker)
+        # marker = classifier.marker_inlet.pull_sample()[0]
+        # print(marker)
 
         # this is a working test marker
-        # time.sleep(2)
-        # marker = ['What:grab;Number:1']
+        time.sleep(2)
+        marker = ['What:grab;Number:1']
 
         # what if there are two grab markers
         if marker and 'What:' in marker[0]:
