@@ -37,7 +37,8 @@ timeOut = None
 agent = UCBQAgent()
 
 params = default_params()
-max_steps = params.get('max_steps', 120)
+# max_steps = params.get('max_steps')
+max_steps = 100
 
 from rl.ucbq_environment_stateless import ModifiedRandomEnvironment
 env = ModifiedRandomEnvironment()
@@ -59,14 +60,16 @@ while True:
 
     action = agent.choose_action(state) 
     reward, next_state, done = env.step(action)
+
     print(f"step: {t}, time: {round(elapsed_time, 2)}, action: {action}, reward {reward}")
+
+    if done:
+        print(f'convergence_consecutive_limit reached, action: {action}')
+        break
        
     agent.learn(state, action, reward, next_state)
 
     t += 1
-    
-    # if done:
-    #     break
 
 utils.print_agent_stats(agent)
 print(f"Correct action: {env.correct_action}")

@@ -1,3 +1,5 @@
+from rl.ucbq_agent import UCBQAgent
+
 import matplotlib.pyplot as plt
 
 # Get the first 5 standard colors from the default color cycle
@@ -40,7 +42,7 @@ def plot_q_learning(df, ax):
     customize_plot(ax)
 
 def plot_q_learning_separate(df, ax):
-    initial_q_value = 0
+    initial_q_value = UCBQAgent().start_q_value
     ax1, ax2 = ax
     
     df_plot_q_values = df.pivot(index='t', columns='action', values='new_Q_value')

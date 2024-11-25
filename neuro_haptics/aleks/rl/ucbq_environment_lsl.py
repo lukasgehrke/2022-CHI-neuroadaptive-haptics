@@ -84,6 +84,7 @@ class UCBQEnvironmentLSL(ModifiedRandomEnvironment):
         time.sleep(1)
 
         # Convert answer to format expected by the agent (negative values)
-        reward = answer - 1.0
+        # reward = answer - 1.0
+        reward = answer
 
         return reward

@@ -62,15 +62,16 @@ class UCBQAgent:
         self.epsilon_decay_denumerator = params.get('epsilon_decay', 20)
         self.epsilon_min = params.get('epsilon_min', 0.01)        
         # self.epsilon_decay = lambda t: np.log10(t+1)/params.get('epsilon_decay', 20)
-        self.ucb_c = params.get('ucb_c', 2)
+        self.ucb_c = params.get('ucb_c', 0.5)
+        # self.ucb_c = params.get('ucb_c', 1)
 
         # start_q_value = -(self.num_actions - 1)
-        start_q_value = 0
+        self.start_q_value = 1.0
         # Need to set this expilcitly to float, otherwise when we assign the
         # new value to the Q-table, it will be casted to int
         # TODO: However, the performance with the casting (rounding) looked better
         # self.Q = np.full((self.num_states, self.num_actions), start_q_value)
-        self.Q = np.full((self.num_states, self.num_actions), float(start_q_value))
+        self.Q = np.full((self.num_states, self.num_actions), float(self.start_q_value))
 
         # Initialize N-table for action counts
         # Needs to be `one` to avoid div by zero
@@ -137,7 +138,7 @@ class UCBQAgent:
         # TODO:
         reward_adjusted = reward
 
-        self.Q[state][action] = (1 - self.alpha) * self.Q[state][action] + self.alpha * (reward_adjusted + self.gamma * np.max(self.Q[next_state]))
+        self.Q[state][action] = (1 - self.alpha) * self.Q[state][action] + self.alpha * (reward_adjusted - self.gamma * np.max(self.Q[next_state]))
         
         self.logger.info(f'{self.t},{action},{reward},{reward_adjusted},{self.Q[state][action]},{self.alpha},{self.epsilon}')
 
