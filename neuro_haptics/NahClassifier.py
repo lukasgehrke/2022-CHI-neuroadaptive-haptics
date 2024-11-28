@@ -3,57 +3,50 @@ import pickle, time, os, json
 import numpy as np
 from bci_funcs import windowed_mean, calculate_velocity, bandpass_filter_fft, gaze_remove_invalid_samples
 import concurrent.futures
+from sklearn.preprocessing import StandardScaler
 
 class NahClassifier:
     def __init__(self, model_path):
         
-        # Load the pre-trained model
-        self.model = pickle.load(open(model_path, 'rb'))
+        self.model = pickle.load(open(model_path+'model.sav', 'rb'))
+        self.scaler = pickle.load(open(model_path+'scaler.sav', 'rb'))
 
-        # load bci_params json file from the model_path
-        with open(model_path.replace('model', 'bci_params').replace('.sav', '.json')) as f:
+        with open(model_path+'bci_params.json', 'r') as f:
             bci_params = json.load(f)
-        self.target_class = bci_params['target_class']
         self.mean_fix_delay = bci_params['mean_fix_delay']
-
-        # load top_channels.json file from the model_path
-        with open(model_path.replace('model', 'top_channels').replace('.sav', '.json')) as f:
-            top_channels = json.load(f)
-        self.top_channels = top_channels['top_channels']
-
-        # load boundaries json
-        # self.boundaries = pickle.load(open(model_path.replace('model', 'boundaries'), 'rb'))
-        with open(model_path.replace('model', 'boundaries').replace('.sav', '.json')) as f:
-            boundaries = json.load(f)
-        self.boundaries = boundaries['boundaries']
+        
+        with open(model_path+'top_channels.json', 'r') as f:
+            self.top_channels = json.load(f)
+        with open(model_path+'boundaries.json', 'r') as f:
+            self.boundaries = json.load(f)
     
         # resolve streams
         streams = None
         while streams is None:
-            print("Looking for EEG stream...")	
-            streams = resolve_byprop('name', 'BrainVision RDA')
+            # print("Looking for EEG stream...")	
+            # streams = resolve_byprop('name', 'BrainVision RDA')
             
-            # Don't think this is necessary, since resolve_prop will wait until it finds the stream
-            if not streams:
-                print("No EEG stream found, retrying...")
-                time.sleep(1)
-            
-            print("EEG stream found!")
-
-            # init EEG stream inlet
-            self.eeg_inlet = StreamInlet(streams[0])
-
-            # print("Looking for Hand motion stream...")
-            # streams = resolve_byprop('name', 'NAH_GazeBehavior') # TODO add the correct name for the hand motion stream
-            
+            # # Don't think this is necessary, since resolve_prop will wait until it finds the stream
             # if not streams:
-            #     print("No Hand motion stream found, retrying...")
+            #     print("No EEG stream found, retrying...")
             #     time.sleep(1)
+            
+            # print("EEG stream found!")
 
-            # print("Hand motion stream found!")
+            # # init EEG stream inlet
+            # self.eeg_inlet = StreamInlet(streams[0])
 
-            # # init Hand motion stream inlet
-            # self.motion_inlet = StreamInlet(streams[0])
+            print("Looking for Hand motion stream...")
+            streams = resolve_byprop('name', 'NAH_rb_handRight')
+            
+            if not streams:
+                print("No Hand motion stream found, retrying...")
+                time.sleep(1)
+
+            print("Hand motion stream found!")
+
+            # init Hand motion stream inlet
+            self.motion_inlet = StreamInlet(streams[0])
 
             
             # print("Looking for EYE stream...")
@@ -95,13 +88,16 @@ class NahClassifier:
         float: The probability of the target class
         float: The score of the prediction
         """
+
+        features = self.scaler.transform(features)
+        score = self.model.transform(features)[0][0]
         
         prediction = int(self.model.predict(features)[0])  # predicted class
-        probs = self.model.predict_proba(features)  # probability for class prediction
-        probs_target_class = probs[0][int(self.target_class)]
-        score = self.model.transform(features)[0][0]
 
-        return prediction, probs_target_class, score
+        # probs = self.model.predict_proba(features)  # probability for class prediction
+        # probs_target_class = probs[0][int(self.target_class)]
+
+        return prediction, score #probs_target_class
     
     def normalize_to_boundaries(self, score):
         """
@@ -130,20 +126,20 @@ class NahClassifier:
         else:
             return normalized_score
         
-    # def discretize(self, score):
+    def discretize(self, score):
 
-    #     # find the boundaries for the classifier
-    #     for i, boundary in enumerate(self.boundaries):
-    #         if score < boundary:
-    #             bin = i
-    #             break
-    #         else:
-    #             bin = len(self.boundaries)
+        # find the boundaries for the classifier
+        for i, boundary in enumerate(self.boundaries):
+            if score < boundary:
+                bin = i
+                break
+            else:
+                bin = len(self.boundaries)
 
-    #     bin += 1        
-    #     return bin
+        bin += 1        
+        return bin
         
-    def get_data(self, data_type):
+    def get_data(self, data_type, grab_ts):
         """
         Pull data from the specified inlet for a duration of 1 second.
 
@@ -154,38 +150,48 @@ class NahClassifier:
         numpy.ndarray or float: The pulled data as a numpy array (for 'eeg', 'eye', 'motion') 
                                 or the fix delay as a float (for 'marker').
         """
+
         if data_type == 'eeg':
             all_data = np.empty((0, 64))
+            inlet = self.eeg_inlet
         elif data_type == 'eye':
             all_data = np.empty((0, 11))
+            inlet = self.eye_inlet
         elif data_type == 'motion':
-            all_data = np.empty((0, 3))  # Assuming 3 channels for motion data
+            all_data = np.empty((0, 7))
+            inlet = self.motion_inlet
         elif data_type == 'marker':
             fix_delay = 0
+            inlet = self.marker_inlet
         else:
             raise ValueError("Invalid data type. Choose from 'eeg', 'eye', 'motion', 'marker'.")
+        
+        # if continuous
+        if data_type == 'eeg' or data_type == 'motion' or data_type == 'eye':
+            _, ts = inlet.pull_sample()
+            ts_tmp = ts
+        elif data_type == 'marker':
+            ts = grab_ts
 
-        # Continue pulling data until we have exactly 1 second of samples
-        pull_time = time.time()
-        while time.time() - pull_time < 1.0:  # 1 second window to grab data
+        while ts_tmp - ts < 1.0:  # 1 second window to grab data
 
             # Pull data
             if data_type == 'eeg':
-                eeg_data, _ = self.eeg_inlet.pull_sample(timeout=0.1)
+                eeg_data, ts_tmp = self.eeg_inlet.pull_sample()
                 eeg_data = np.array(eeg_data).reshape(1, -1)
                 all_data = np.vstack([all_data, eeg_data])
             elif data_type == 'motion':
-                motion_data, _ = self.motion_inlet.pull_sample(timeout=0.1)
+                motion_data, ts_tmp = self.motion_inlet.pull_sample()
                 motion_data = np.array(motion_data).reshape(1, -1)
                 all_data = np.vstack([all_data, motion_data])
             elif data_type == 'eye':
-                eye_data, _ = self.eye_inlet.pull_sample(timeout=0.1)
+                eye_data, ts_tmp = self.eye_inlet.pull_sample()
                 eye_data = np.array(eye_data).reshape(1, -1)
                 all_data = np.vstack([all_data, eye_data])
             elif data_type == 'marker':
-                marker_sample, _ = self.marker_inlet.pull_sample(timeout=0.1)
+                marker_sample, ts_tmp = self.marker_inlet.pull_sample()
                 if marker_sample and 'focus:in;object: PlacementPos' in marker_sample[0]:
-                    fix_delay = time.time() - pull_time
+                    fix_delay = ts_tmp - ts # check value
 
         if data_type in ['eeg', 'eye', 'motion']:
             return all_data.T
@@ -197,20 +203,25 @@ class NahClassifier:
 
     def compute_features(self, data, modality):
 
-        window_size = 50 # ms
+        print(f"Data shape: {data.shape}")
+
+        # Consider only data from the first 450 ms
+        srate = data.shape[1] / 1.0  # Assuming data is collected for 1 second
+        num_samples_450ms = int(0.45 * srate)
+        data = data[:, :num_samples_450ms]
 
         # eeg processing and feature extraction
         if modality == 'eeg':
 
-            last_sample = 108 # ?Why again 108?
-            erp_selected = data[self.top_channels, 0:last_sample]
-            
+            erp_selected = data[self.top_channels, :]# TODO channel indices correct from 0 index?
             erp_selected = np.expand_dims(erp_selected, axis=2)
-            erp_selected = bandpass_filter_fft(erp_selected, 0.1, 15, 250)
+            erp_selected = np.squeeze(bandpass_filter_fft(erp_selected, 0.1, 15, 250))
 
-            erp_selected = erp_selected.reshape(erp_selected.shape[0], 9, 12)
-            windowed_means = np.mean(erp_selected, axis=2)
+            data = np.array_split(erp_selected, 9, axis=1)
+            windowed_means = [np.mean(part, axis=1) for part in data]
+            windowed_means = np.array(windowed_means).T
             baseline = windowed_means[:,0]
+
             windowed_means = windowed_means - baseline[:,np.newaxis] # correct for baseline
             windowed_means = windowed_means[:,1:9].flatten()
 
@@ -218,15 +229,15 @@ class NahClassifier:
         
         elif modality == 'motion':
 
-            srate = data.shape[1]
-
-            cart_motion_chans = np.arange(0,3) # TODO figure out which channels in stream are for motion data
+            cart_motion_chans = np.arange(0,3)
             velocity = calculate_velocity(data, cart_motion_chans, srate)
-            velocity = np.expand_dims(velocity, axis=0) # TODO test
-            velocity = bandpass_filter_fft(velocity, 0.1, 15, srate)
+            velocity = np.expand_dims(velocity, axis=[0,2])
+            velocity = np.squeeze(bandpass_filter_fft(velocity, 0.1, 15, srate))
 
-            windowed_means = windowed_mean(velocity, srate, window_size)
-            windowed_means = windowed_means[:,1:9].flatten()
+            data = np.array_split(velocity, 9)
+            windowed_means = [np.mean(part) for part in data]
+            windowed_means = np.array(windowed_means)
+            windowed_means = windowed_means[1:9]
 
             return windowed_means
 
@@ -243,51 +254,66 @@ class NahClassifier:
             velocity = calculate_velocity(data, gaze_direction_chans, srate)
             velocity = gaze_remove_invalid_samples(velocity, data[gaze_validity_chan,:])
 
+            # these are not used 
             gaze_velocity = np.expand_dims(gaze_velocity, axis=0)
             windowed_means = windowed_mean(gaze_velocity, srate, window_size)
             windowed_means = windowed_means[:,1:9].flatten()
 
             return windowed_means
 
-    def choose_nah_label(self):
+    def choose_nah_label(self, grab_ts):
+        """
+        Pull data directly after the grab marker, compute features, and predict the NAH label.
 
-        # this needs to pull data directly after the grab marker
-        tic = time.time()
+        Returns:
+        float: The predicted score.
+        """
         with concurrent.futures.ThreadPoolExecutor() as executor:
-            eeg = executor.submit(self.get_data, 'eeg')
-            # motion = executor.submit(self.get_data, 'motion')
-            # eye = executor.submit(self.get_data, 'eye')
-            # fix_delay = executor.submit(self.get_data, 'marker')
-        toc = time.time()
-        print(toc - tic)
+            futures = {
+                # executor.submit(self.get_data, 'eeg', grab_ts): 'eeg',
+                executor.submit(self.get_data, 'motion', grab_ts): 'motion',
+                # executor.submit(self.get_data, 'marker', grab_ts): 'marker'
+            }
 
-        # compute features and predict    
-        eeg_feat = classifier.compute_features(eeg.result(), 'eeg') # this needs to pull data directly after the grab marker
-        # eye_feat = classifier.compute_features(eye.result(), 'eye') # this needs to pull data directly after the grab marker
+            results = {}
+            for future in concurrent.futures.as_completed(futures):
+                data_type = futures[future]
+                try:
+                    result = future.result()
+                    results[data_type] = result
+                except Exception as exc:
+                    print(f"{data_type} generated an exception: {exc}")
 
-        # feature_vector = np.concatenate((eeg_feat, eye_feat, [fix_delay.result()]), axis=0).reshape(1, -1)
-        feature_vector = eeg_feat.reshape(1, -1)
-        print(np.round(feature_vector[0,0:10],2))
-        prediction, probs_target_class, score = classifier.predict(feature_vector)
-        
-        # Print the formatted output
-        print(f"Prediction: {prediction}")
-        print(f"Probability of Target Class: {probs_target_class:.4f}")
-        print(f"Score: {score:.4f}")
+        # Compute features and predictx
+        # eeg_feat = self.compute_features(results['eeg'], 'eeg')
+        motion_feat = self.compute_features(results['motion'], 'motion')
+        # fix_delay = fix_delay_future.result()
 
-        discrete_prediction = self.discretize(score)
+        # feature_vector = np.concatenate((eeg_feat, motion_feat, [fix_delay]), axis=0).reshape(1, -1)
+        feature_vector = motion_feat.reshape(1, -1)
+        # print(f"Feature vector (first 10 values): {np.round(feature_vector[0, 0:10], 2)}")
 
-        return discrete_prediction
+        # _, _, score = self.predict(feature_vector)
+        _, score = self.predict(feature_vector)
+        print(f"Score: {score:.2f}")
+
+        # Normalize the score to the range [0, 1]
+        score = self.normalize_to_boundaries(score)
+
+        return score
     
-    def send_nah_label_to_ai(self, prediction):
-        
-        # use LSL to send the prediction to the AI
-        # LabelMaker_labels
+    def send_nah_label_to_ai(self, label):
+        """
+        Send the NAH label to the AI system.
 
-        # does it wait for a certain event to send the prediction? so is there a specific condition for the agent
-        # to only listen to the prediction at a certain time?
-        prediction = str(prediction)
-        self.labels.push_sample(prediction)
+        Parameters:
+        label (int or str): The label to be sent. It will be converted to a string before sending.
+
+        Returns:
+        None
+        """
+        label = str(label)
+        self.labels.push_sample([label])
 
 # main
 if __name__ == "__main__":
@@ -298,7 +324,7 @@ if __name__ == "__main__":
     path = '/Users/lukasgehrke/data/NAH/data/5_single-subject-EEG-analysis/'
     # path = r'P:\Lukas_Gehrke\NAH\data\5_single-subject-EEG-analysis'
 
-    model_path = path+os.sep+pID+os.sep+'model.sav'
+    model_path = path+os.sep+pID+os.sep
     
     classifier = NahClassifier(model_path)
 
@@ -318,12 +344,13 @@ if __name__ == "__main__":
         #     print(f"{formatted_time} - Waiting for grab marker...")
         #     last_print_time = current_time
 
-        # marker = classifier.marker_inlet.pull_sample()[0]
+        # marker, grab_ts = classifier.marker_inlet.pull_sample()[0]
         # print(marker)
 
         # this is a working test marker
-        time.sleep(2)
+        time.sleep(1)
         marker = ['What:grab;Number:1']
+        grab_ts = time.time()
 
         # what if there are two grab markers
         if marker and 'What:' in marker[0]:
@@ -338,9 +365,9 @@ if __name__ == "__main__":
                     print(f"Grab {current_grab_number} detected: ", marker)
 
                     tic = time.time()
-                    mapped_label = classifier.choose_nah_label()
+                    label = classifier.choose_nah_label(grab_ts)
                     print(f"Time to choose label: {time.time() - tic}")
 
-                    classifier.send_nah_label_to_ai(mapped_label)
+                    classifier.send_nah_label_to_ai(label)
                     
-                    print("Label sent to AI: ", mapped_label)
+                    print("Label sent to AI: ", label)
