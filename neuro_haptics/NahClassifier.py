@@ -73,6 +73,17 @@ class NahClassifier:
             # init marker stream inlet
             self.marker_inlet = StreamInlet(streams[0])
 
+            print("Looking for Fixations stream...")
+            streams = resolve_byprop('name', 'NAH_FocusedObjectEvents')
+            if not streams:
+                print("No Marker stream found, retrying...")
+                time.sleep(1)
+
+            
+            print("Fixations stream found!")
+            # init marker stream inlet
+            self.fixations_inlet = StreamInlet(streams[0])
+
         # set up outlet for sending predictions
         self.labels = StreamOutlet(StreamInfo('labels', 'Markers', 1, 0, 'string', 'myuid34234'))
     
@@ -162,22 +173,24 @@ class NahClassifier:
             inlet = self.motion_inlet
         elif data_type == 'marker':
             fix_delay = 0
-            inlet = self.marker_inlet
+            inlet = self.fixations_inlet
         else:
             raise ValueError("Invalid data type. Choose from 'eeg', 'eye', 'motion', 'marker'.")
         
-        # if continuous
-        if data_type == 'eeg' or data_type == 'motion' or data_type == 'eye':
-            _, ts = inlet.pull_sample()
-            ts_tmp = ts
-        elif data_type == 'marker':
-            ts = grab_ts
-
-        while ts_tmp - ts < 1.0:  # 1 second window to grab data
+        # # if continuous
+        # if data_type == 'eeg' or data_type == 'motion' or data_type == 'eye':
+        #     _, ts = inlet.pull_sample()
+        #     ts_tmp = ts
+        # elif data_type == 'marker':
+        #     ts_tmp = grab_ts
+        #     ts = grab_ts
+        
+        ts_tmp = grab_ts
+        while ts_tmp - grab_ts < 1.0:  # 1 second window to grab data
 
             # Pull data
             if data_type == 'eeg':
-                eeg_data, ts_tmp = self.eeg_inlet.pull_sample()
+                eeg_data, ts_tmp = self.eeg_inlet.pull_sample() # can be simplified by using inlet
                 eeg_data = np.array(eeg_data).reshape(1, -1)
                 all_data = np.vstack([all_data, eeg_data])
             elif data_type == 'motion':
@@ -189,13 +202,17 @@ class NahClassifier:
                 eye_data = np.array(eye_data).reshape(1, -1)
                 all_data = np.vstack([all_data, eye_data])
             elif data_type == 'marker':
-                marker_sample, ts_tmp = self.marker_inlet.pull_sample()
+                marker_sample, ts_tmp = inlet.pull_sample()
+                print(marker_sample)
+                print(ts_tmp - grab_ts)
                 if marker_sample and 'focus:in;object: PlacementPos' in marker_sample[0]:
-                    fix_delay = ts_tmp - ts # check value
+                    fix_delay = ts_tmp - grab_ts # check value
+                    break
 
         if data_type in ['eeg', 'eye', 'motion']:
             return all_data.T
         elif data_type == 'marker':
+            print(f"Fix delay: {fix_delay:.2f}")
             if fix_delay == 0:
                 print("No fix delay detected, using mean fix delay")
                 fix_delay = self.mean_fix_delay
@@ -287,7 +304,7 @@ class NahClassifier:
         # Compute features and predictx
         # eeg_feat = self.compute_features(results['eeg'], 'eeg')
         # motion_feat = self.compute_features(results['motion'], 'motion')
-        fix_delay = fix_delay_future.result()
+        fix_delay = results['marker']
 
         # feature_vector = np.concatenate((eeg_feat, motion_feat, [fix_delay]), axis=0).reshape(1, -1)
         # feature_vector = motion_feat.reshape(1, -1)
@@ -322,8 +339,8 @@ if __name__ == "__main__":
     id = 4
     pID = 'sub-' + "%01d" % (id)
     # path = '/Volumes/Lukas_Gehrke/NAH/data/5_single-subject-EEG-analysis'
-    path = '/Users/lukasgehrke/data/NAH/data/5_single-subject-EEG-analysis/'
-    # path = r'P:\Lukas_Gehrke\NAH\data\5_single-subject-EEG-analysis'
+    # path = '/Users/lukasgehrke/data/NAH/data/5_single-subject-EEG-analysis/'
+    path = r'P:\Lukas_Gehrke\NAH\data\5_single-subject-EEG-analysis'
 
     model_path = path+os.sep+pID+os.sep
     
@@ -345,13 +362,13 @@ if __name__ == "__main__":
         #     print(f"{formatted_time} - Waiting for grab marker...")
         #     last_print_time = current_time
 
-        # marker, grab_ts = classifier.marker_inlet.pull_sample()[0]
-        # print(marker)
+        marker, grab_ts = classifier.marker_inlet.pull_sample()
+        print(marker)
 
         # this is a working test marker
-        time.sleep(1)
-        marker = ['What:grab;Number:1']
-        grab_ts = time.time()
+        #time.sleep(1)
+        #marker = ['What:grab;Number:1']
+        #grab_ts = time.time()
 
         # what if there are two grab markers
         if marker and 'What:' in marker[0]:
