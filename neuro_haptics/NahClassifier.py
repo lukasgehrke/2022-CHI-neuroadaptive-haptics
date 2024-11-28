@@ -36,17 +36,17 @@ class NahClassifier:
             # # init EEG stream inlet
             # self.eeg_inlet = StreamInlet(streams[0])
 
-            print("Looking for Hand motion stream...")
-            streams = resolve_byprop('name', 'NAH_rb_handRight')
+            # print("Looking for Hand motion stream...")
+            # streams = resolve_byprop('name', 'NAH_rb_handRight')
             
-            if not streams:
-                print("No Hand motion stream found, retrying...")
-                time.sleep(1)
+            # if not streams:
+            #     print("No Hand motion stream found, retrying...")
+            #     time.sleep(1)
 
-            print("Hand motion stream found!")
+            # print("Hand motion stream found!")
 
-            # init Hand motion stream inlet
-            self.motion_inlet = StreamInlet(streams[0])
+            # # init Hand motion stream inlet
+            # self.motion_inlet = StreamInlet(streams[0])
 
             
             # print("Looking for EYE stream...")
@@ -62,16 +62,16 @@ class NahClassifier:
             # self.eye_inlet = StreamInlet(streams[0])
 
                         
-            # print("Looking for Marker stream...")
-            # streams = resolve_byprop('name', 'NAH_Unity3DEvents')
-            # if not streams:
-            #     print("No Marker stream found, retrying...")
-            #     time.sleep(1)
+            print("Looking for Marker stream...")
+            streams = resolve_byprop('name', 'NAH_Unity3DEvents')
+            if not streams:
+                print("No Marker stream found, retrying...")
+                time.sleep(1)
 
             
-            # print("Marker stream found!")
-            # # init marker stream inlet
-            # self.marker_inlet = StreamInlet(streams[0])
+            print("Marker stream found!")
+            # init marker stream inlet
+            self.marker_inlet = StreamInlet(streams[0])
 
         # set up outlet for sending predictions
         self.labels = StreamOutlet(StreamInfo('labels', 'Markers', 1, 0, 'string', 'myuid34234'))
@@ -271,8 +271,8 @@ class NahClassifier:
         with concurrent.futures.ThreadPoolExecutor() as executor:
             futures = {
                 # executor.submit(self.get_data, 'eeg', grab_ts): 'eeg',
-                executor.submit(self.get_data, 'motion', grab_ts): 'motion',
-                # executor.submit(self.get_data, 'marker', grab_ts): 'marker'
+                # executor.submit(self.get_data, 'motion', grab_ts): 'motion',
+                executor.submit(self.get_data, 'marker', grab_ts): 'marker'
             }
 
             results = {}
@@ -286,12 +286,13 @@ class NahClassifier:
 
         # Compute features and predictx
         # eeg_feat = self.compute_features(results['eeg'], 'eeg')
-        motion_feat = self.compute_features(results['motion'], 'motion')
-        # fix_delay = fix_delay_future.result()
+        # motion_feat = self.compute_features(results['motion'], 'motion')
+        fix_delay = fix_delay_future.result()
 
         # feature_vector = np.concatenate((eeg_feat, motion_feat, [fix_delay]), axis=0).reshape(1, -1)
-        feature_vector = motion_feat.reshape(1, -1)
+        # feature_vector = motion_feat.reshape(1, -1)
         # print(f"Feature vector (first 10 values): {np.round(feature_vector[0, 0:10], 2)}")
+        feature_vector = np.array([fix_delay]).reshape(1, -1)
 
         # _, _, score = self.predict(feature_vector)
         _, score = self.predict(feature_vector)
