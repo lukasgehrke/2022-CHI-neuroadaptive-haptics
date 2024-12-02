@@ -203,11 +203,12 @@ class NahClassifier:
                 all_data = np.vstack([all_data, eye_data])
             elif data_type == 'marker':
                 marker_sample, ts_tmp = inlet.pull_sample()
-                print(marker_sample)
-                print(ts_tmp - grab_ts)
-                if marker_sample and 'focus:in;object: PlacementPos' in marker_sample[0]:
-                    fix_delay = ts_tmp - grab_ts # check value
-                    break
+                if ts_tmp - grab_ts > 0:
+                    print(marker_sample)
+                    print(ts_tmp - grab_ts)
+                    if marker_sample and 'focus:in;object: PlacementPos' in marker_sample[0]:
+                        fix_delay = ts_tmp - grab_ts # check value
+                        break   
 
         if data_type in ['eeg', 'eye', 'motion']:
             return all_data.T
