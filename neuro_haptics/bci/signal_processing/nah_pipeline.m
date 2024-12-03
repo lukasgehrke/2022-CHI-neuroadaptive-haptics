@@ -6,7 +6,7 @@
 function nah_pipeline(subjects)
 
     %% config
-    current_sys = "mac"% "c060";
+    current_sys = "c060"; %"mac"% 
     eeglab_ver(current_sys);
     
     %% load configuration
@@ -65,7 +65,7 @@ function nah_pipeline(subjects)
         event_table = event_table(unique_idx, :);
     
         % append questionnaire results
-        quest = find(contains(types, 'What:end'));
+        quest = find(contains(types, 'What:rating'));
         quest_events = events(quest);
         quest_events = nah_parse_events(quest_events);
         quest_table = struct2table(quest_events);
