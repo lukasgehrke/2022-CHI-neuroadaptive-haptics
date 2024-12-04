@@ -177,27 +177,36 @@ class NahClassifier:
             inlet = self.fixations_inlet
         else:
             raise ValueError("Invalid data type. Choose from 'eeg', 'eye', 'motion', 'marker'.")
-        
-        ts_tmp = grab_ts
-        while ts_tmp - grab_ts <= 1.0:  # 1 second window to grab data
 
-            # Pull data
-            if data_type in ['eeg', 'eye', 'motion']:
+        if data_type in ['eeg', 'eye', 'motion']:
+
+            _, ts1 = inlet.pull_sample()
+            ts_tmp = ts1
+
+            while ts_tmp - ts1 <= 1.0:  # 1 second window to grab data
                 tmp_data, ts_tmp = inlet.pull_sample()
                 tmp_data = np.array(tmp_data).reshape(1, -1)
                 all_data = np.vstack([all_data, tmp_data])
             
-            elif data_type == 'marker':
+            return all_data.T    
+        
+        elif data_type == 'marker':
+            
+            _, ts1 = inlet.pull_sample()
+            ts_tmp = ts1
+
+            while ts_tmp - ts1 <= 1.0:  # 1 second window to grab data
+
                 marker_sample, ts_tmp = inlet.pull_sample()
+
                 if marker_sample and 'focus:in;object: PlacementPos' in marker_sample[0]:
-                    fix_delay = ts_tmp - grab_ts # check value
+                    fix_delay = ts_tmp - ts1
+                    print(f"Fixation delay: {fix_delay:.2f}")
                     break
 
-        if data_type in ['eeg', 'eye', 'motion']:
-            return all_data.T
-        elif data_type == 'marker':
             if fix_delay == 0:
                 fix_delay = self.mean_fix_delay
+
             return fix_delay
 
     def compute_features(self, data, modality):
@@ -313,10 +322,13 @@ class NahClassifier:
 if __name__ == "__main__":
 
     # Parse command-line arguments
-    parser = argparse.ArgumentParser(description="Run NahClassifier for a specific participant.")
-    parser.add_argument('--id', type=int, required=True, help='Participant ID')
-    args = parser.parse_args()
-    pID = 'sub-' + "%01d" % (args.id)
+    # parser = argparse.ArgumentParser(description="Run NahClassifier for a specific participant.")
+    # parser.add_argument('--id', type=int, required=True, help='Participant ID')
+    # args = parser.parse_args()
+    # pID = 'sub-' + "%01d" % (args.id)
+
+    
+    pID = 'sub-' + "6"
 
     # path = '/Volumes/Lukas_Gehrke/NAH/data/5_single-subject-EEG-analysis'
     # path = '/Users/lukasgehrke/data/NAH/data/5_single-subject-EEG-analysis/'
@@ -331,7 +343,6 @@ if __name__ == "__main__":
     while True:
 
         marker, grab_ts = classifier.marker_inlet.pull_sample()
-        print(marker)
 
         # what if there are two grab markers
         if marker and 'What:' in marker[0]:
