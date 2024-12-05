@@ -92,8 +92,9 @@ function nah_pipeline(subjects)
     
         EEG = pop_epoch( EEG, {  'event'  }, epoch_tw, 'epochinfo', 'yes');
     
-        % clean
+        % clean epochs and remove 10 percent of bad epochs from data
         [~, rmepochs] = pop_autorej(EEG, 'nogui', 'on');
+        rmepochs = rmepochs(1:.1*size(EEG.data,3));
     
         % add column bad_epoch to event_table and set to 1 for rmepoch indices
         event_table.bad_epoch = zeros(height(event_table), 1);
@@ -108,8 +109,17 @@ function nah_pipeline(subjects)
         for i = 1:size(event_table,1)
             grab = event_table.latency(i);
             first_fix_after_grab_ix = min((find((fix_lats - grab > 0) == 1)));
-            fix_delay(i) = (fix_lats(first_fix_after_grab_ix) - grab) / EEG.srate;
+            tmp_fix_delay = (fix_lats(first_fix_after_grab_ix) - grab) / EEG.srate;
+
+            if isempty(tmp_fix_delay)
+                fix_delay(i) = 0;
+            elseif tmp_fix_delay > 1
+                fix_delay(i) = 0;
+            else
+                fix_delay(i) = tmp_fix_delay;
+            end
         end
+
         fix_delay = fix_delay';
         fix_delay = table(fix_delay);
     
