@@ -6,7 +6,7 @@ def default_params():
             'num_episodes': 100,
             'num_actions': 4, 
             'convergence_count_start': 0,
-            'convergence_consecutive_limit': 5,
+            'convergence_consecutive_limit': 10,
             # Optimization parameters
             'alpha': 0.5,
             'alpha_decay': 40,

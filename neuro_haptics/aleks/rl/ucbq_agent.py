@@ -62,7 +62,7 @@ class UCBQAgent:
         self.epsilon_decay_denumerator = params.get('epsilon_decay', 20)
         self.epsilon_min = params.get('epsilon_min', 0.01)        
         # self.epsilon_decay = lambda t: np.log10(t+1)/params.get('epsilon_decay', 20)
-        self.ucb_c = params.get('ucb_c', 0.5)
+        self.ucb_c = params.get('ucb_c', 0.25)
         # self.ucb_c = params.get('ucb_c', 1)
 
         # start_q_value = -(self.num_actions - 1)
