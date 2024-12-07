@@ -19,6 +19,10 @@ while True:
 
     action = agent.choose_action(state) 
     reward, next_state, done = env.step(action)
+
+    if done:
+        print(f'convergence_consecutive_limit reached, action: {action}')
+        break    
        
     learn_response = agent.learn(state, action, reward, next_state)
 
