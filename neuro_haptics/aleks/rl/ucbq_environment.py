@@ -1,49 +1,14 @@
-# import random
-# import time
-# import logging
-# from pylsl import StreamInlet, StreamOutlet, StreamInfo, resolve_byprop
-
-# # Setup logging
-# logging.basicConfig(level=logging.INFO)
-
-# # Define the AI stream
-# info = StreamInfo('AIStream', 'Markers', 1, 0, 'int32', 'ai_stream')
-# outlet = StreamOutlet(info)
-# logging.info("AI stream created.")
-
-# # Delay to ensure Participant stream is ready
-# time.sleep(5)
-
-# # Resolve the participant stream
-# logging.info("Looking for a Participant stream...")
-# streams = None
-# while streams is None:
-#     # streams = resolve_byprop('name', 'ParticipantStream')
-#     streams = resolve_byprop('name', 'LabelMaker_labels')
-#     if not streams:
-#         logging.info("No Participant stream found, retrying...")
-#         time.sleep(1)
-
-# inlet = StreamInlet(streams[0])
-# logging.info("Participant stream found.")
-
 import numpy as np
-# from pylsl import StreamInfo, StreamOutlet, StreamInlet, resolve_stream
-# import time
-
-# random seed will only give persistent results if you re-import the script
-# and restart the kernel in the notebook
-# np.random.seed(69)
 
 class ModifiedRandomEnvironment:
-    def __init__(self, num_states=10, params={}):
+    def __init__(self, num_states=1, params={}):
         self.num_states = num_states
         # The last feedback level sent
         # np.random.seed(69)
         self.current_state = np.random.randint(num_states)
         
         # The total number of feedback levels        
-        self.num_actions = params.get('num_actions', 5)
+        self.num_actions = params.get('num_actions', 4)
 
         # TODO:
         # LSL here
@@ -52,17 +17,19 @@ class ModifiedRandomEnvironment:
         # The "right" level of feedback
         self.correct_action = params.get('correct_action', 1)
 
-    # Old
-    def send_feedback_to_participant_and_get_participant_answer(self, action):
+    # "How correct was this action?"
+    def get_mock_response(self, action):
         # Mock answers
-        answer = 0 if action == self.correct_action else -abs(self.correct_action - action)
+        # Assuming equally distributed means        
+        answer = 1 - abs(self.correct_action - action) * 0.33
+        
+        answer += np.random.normal(0, 0.25)        
+        answer = np.clip(answer, 0.0, 1.0)        
 
-        # Simulate noise
-        if np.random.rand() < 0.3:
-            answer += np.random.choice([-1, 1])
-        answer = np.clip(answer, -6, 0)        
+        return answer 
 
-        return answer
+    def send_feedback_to_participant_and_get_participant_answer(self, action):
+        return self.get_mock_response(action)
 
     def step(self, action):
         reward = self.send_feedback_to_participant_and_get_participant_answer(action)
@@ -85,25 +52,4 @@ class ModifiedRandomEnvironment:
             response += np.random.choice([-1, 1])
         response = np.clip(response, -(num_actions-1), 0)
 
-        return response
-
-    def get_mock_response(ai_feedback_level):
-        num_actions = 5
-        action = ai_feedback_level
-        correct_action = 1
-
-        # Adjust for unity response
-        # 1 (completely disagree)
-        # 2 (disagree)
-        # 3 (neither disagree nor agree)
-        # 4 (agree)
-        # 5 (strongly agree)
-        response = 5 - abs(correct_action - action) 
-        
-        # Simulate noise
-        if np.random.rand() < 0.3:
-            response += np.random.choice([-1, 1])
-        response = np.clip(response, 1, num_actions)
-      
-
-        return response        
+        return response 

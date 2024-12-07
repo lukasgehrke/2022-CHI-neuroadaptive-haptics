@@ -2,12 +2,11 @@ def default_params():
     """ These are the default parameters used in the framework. """
     return {
             # Runner parameters
-            'max_steps': 120,
+            'max_steps': 1000,
             'num_episodes': 100,
-            'num_actions': 7, 
-            'correct_action': 1,    # Zero indexed
-            'convergence_count_start': 35,
-            'convergence_consecutive_limit': 15,
+            'num_actions': 4, 
+            'convergence_count_start': 0,
+            'convergence_consecutive_limit': 10,
             # Optimization parameters
             'alpha': 0.5,
             'alpha_decay': 40,
@@ -22,6 +21,8 @@ def default_params():
             'surrogate': False,
             'surrogate_c_interval': 10,
             'surrogate_c_interval_min': 30,
+            # Simulation
+            'correct_action': 1,    # Zero indexed
            }
 
 optimized_params = {'alpha': 0.19008773103975352, 'alpha_decay': 348.142389538547, 'alpha_min': 0.9826884932389596, 'epsilon': 0.28921143036114305, 'epsilon_decay': 445.3413704431987, 'epsilon_min': 0.4278782749167904, 'gamma': 0.9096496016555845, 'surrogate_c_interval': 50.65927148168811, 'surrogate_c_interval_min': 67.48408958504444}

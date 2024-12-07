@@ -33,18 +33,12 @@ parser.add_argument("-t", "--TimeOut", help = "Stop script after n seconds")
 args = parser.parse_args()
 # timeOut = float(args.TimeOut) if bool(args.TimeOut) else 1.69
 timeOut = None
-max_steps = 120
+
+agent = UCBQAgent()
 
 params = default_params()
-agent = UCBQAgent()
-# TODO: explore this
-# Episode rewards: -1729
-# agent = UCBQAgent(params=optimized_params)
-# Episode rewards: -35802
-
-# from rl.thompson_sampling_agent import ThompsonSamplingAgentTemporaryWrapper
-# agent = ThompsonSamplingAgentTemporaryWrapper()
-# Episode rewards: -33
+# max_steps = params.get('max_steps')
+max_steps = 100
 
 from rl.ucbq_environment_stateless import ModifiedRandomEnvironment
 env = ModifiedRandomEnvironment()
@@ -66,13 +60,16 @@ while True:
 
     action = agent.choose_action(state) 
     reward, next_state, done = env.step(action)
+
     print(f"step: {t}, time: {round(elapsed_time, 2)}, action: {action}, reward {reward}")
+
+    if done:
+        print(f'convergence_consecutive_limit reached, action: {action}')
+        break
        
     agent.learn(state, action, reward, next_state)
 
     t += 1
-    
-    # if done:
-    #     break
 
 utils.print_agent_stats(agent)
+print(f"Correct action: {env.correct_action}")

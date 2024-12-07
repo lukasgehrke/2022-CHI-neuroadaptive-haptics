@@ -3,11 +3,14 @@ clear bemobil_config
 %% General Setup
 
 if strcmp(current_sys,'win')
-    path = 'P:\Lukas_Gehrke\fastReach';
+    path = 'P:\Lukas_Gehrke\NAH';
+    % path = 'C:\Users\Lukas\Desktop\nah\tst-eeg';
+elseif strcmp(current_sys,'c060')
+    path = 'P:\Lukas_Gehrke\NAH'; 
 else
-    % path = '/Volumes/Lukas_Gehrke/fastReach';
+    path = '/Users/lukasgehrke/data/NAH/';
     % path = '/Users/lukasgehrke/Documents/publications/2022-CHI-neuroadaptive-haptics/';
-    path = '/Volumes/Lukas_Gehrke/NAH/';
+    % path = '/Volumes/Lukas_Gehrke/NAH/';
 end
 
 bemobil_config.study_folder = [path filesep 'data' filesep]; %(NEEDS to have a filesep at the end, sorry!) 
@@ -34,6 +37,8 @@ bemobil_config.single_subject_cleaned_ICA_filename = 'cleaned_with_ICA.set';
 
 bemobil_config.merged_physio_filename = 'nah_PHYSIO.set';
 bemobil_config.processed_physio_filename = 'physio_processed.set';
+
+bemobil_config.merged_motion_filename = 'nah_MOTION.set';
 
 %% Preprocessing
 

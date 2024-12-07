@@ -45,7 +45,17 @@ function nah_import(cfg, subject)
     %       subjectData.fields.[insert your field name here].Levels.[insert the name of the first level] = 'describe what the level means';
     %       subjectData.fields.[insert your field name here].Levels.[insert the name of the Nth level]   = 'describe what the level means';
     %--------------------------------------------------------------------------
+
+    motionInfo  = []; 
     
+    % motion specific fields in json
+    motionInfo.motion = [];
+    motionInfo.motion.RecordingType                     = 'continuous';
+    motionInfo.Manufacturer                      = 'HTC';
+    motionInfo.ManufacturersModelName            = 'VIVE';
+    motionInfo.SamplingFrequency                 = 'n/a';
+    motionInfo.SoftwareVersions                  = 'n/a';
+
     %%
     
     config                        = [];                                 % reset for each loop 
@@ -63,28 +73,24 @@ function nah_import(cfg, subject)
         'FC2', 'F4', 'F8', 'Fp2', 'AF7', 'AF3', 'AFz', 'F1', 'F5', 'FT7', ...
         'FC3', 'C1', 'C5', 'TP7', 'CP3', 'P1', 'P5', 'PO7', 'PO3', 'POz', ...
         'PO4', 'PO8', 'P6', 'P2', 'CPz', 'CP4', 'TP8', 'C6', 'C2', 'FC4', ...
-        'FT8', 'F6', 'AF8', 'AF4', 'F2', 'VEOG' , 'EMG'};
+        'FT8', 'F6', 'AF8', 'AF4', 'F2', 'VEOG'};
     config.eeg.ref_channel        = 'FCz'; % optional, relevant only if you want to re-use the ref channel after re-referencing
     
-    config.other_data_types        = {'physio'}; % TODO ! Fix this for when eyetracking data is included
+    config.other_data_types        = {'physio', 'motion'};
     config.phys.streams{1}.stream_name = 'NAH_GazeBehavior';
-    % config.phys.streams{1}.stream_name = 'CPS1_GazeBehavior';
     
     %%
     
     config.filename               = [cfg.study_folder filesep '0_source-data' filesep sub_path filesep 'nah.xdf'];
 
-    % if ~strcmp(config.session, 'Baseline')
-    %     config.phys.streams{1}.stream_name          = 'eeg_classifier';            % optional
-    % end
-
-    % TODO remove, only there for test dataset
-    % config.eeg_index = 2;
-    % config.load_xdf_flags = {'HandleJitterRemoval', false};
+    config.motion.streams{1}.xdfname                    = 'NAH_rb_handRight';
+    config.motion.streams{1}.bidsname                   = 'HTCViveRightHand';
+    config.motion.streams{1}.tracked_points             = 'NAH_rb_handRight';
 
     bemobil_xdf2bids(config, ...
         'general_metadata', generalInfo,...
         'participant_metadata', subjectInfo,...
+        'motion_metadata', motionInfo, ...
         'eeg_metadata', eegInfo);
         
     % configuration for bemobil bids2set
