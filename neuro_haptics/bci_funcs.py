@@ -1,6 +1,38 @@
 import numpy as np
 from scipy import stats
 
+
+def bandpass_filter_fft(data, lowcut, highcut, fs):
+    """
+    Apply a bandpass filter to 3D ERP data using FFT.
+
+    Parameters:
+    data (numpy.ndarray): 3D array of ERP data with shape (channels, samples, trials)
+    lowcut (float): Low cutoff frequency in Hz
+    highcut (float): High cutoff frequency in Hz
+    fs (float): Sampling frequency in Hz
+
+    Returns:
+    numpy.ndarray: Filtered ERP data
+    """
+    # Perform FFT on the data
+    fft_data = np.fft.fft(data, axis=1)
+    freqs = np.fft.fftfreq(data.shape[1], d=1/fs)
+
+    # Create a frequency mask
+    mask = (np.abs(freqs) >= lowcut) & (np.abs(freqs) <= highcut)
+    mask = mask.reshape((1, -1, 1))  # Reshape mask to match the dimensions of fft_data
+
+
+    # Apply the mask to the FFT data
+    fft_data *= mask
+
+    # Perform the inverse FFT to get the filtered data
+    filtered_data = np.fft.ifft(fft_data, axis=1)
+
+    # Return the real part of the filtered data
+    return np.real(filtered_data)
+
 def windowed_mean(data, srate, window_size):
     
     n_windows = int(np.floor(1000 / window_size)) # int(np.floor(srate / window_size))
@@ -21,25 +53,62 @@ def windowed_mean(data, srate, window_size):
 
     return windowed_mean
 
-# TODO fix this with real-time data
-def compute_gaze_velocity(data, srate, window_size, gaze_direction_chans, gaze_validity_chan):
-
-    window_size = int(np.floor(window_size * 0.001 * srate)) # ms to samples
-    n_windows = int(np.floor(srate / window_size))
-
-    data = data[0:n_windows*window_size,:]
-
-    gaze_velocity = np.zeros((data.shape[0], data.shape[1] - 1))
-
-    tmp = np.diff(data[gaze_direction_chans, :], axis=1)
-    gaze_velocity = np.sqrt(np.sum(tmp**2, axis=0))
-
-    # invalid_samples = data[gaze_validity_chan, :-1] == 1
-    # gaze_velocity[invalid_samples] = 0 # np.nan
-    # repeat last value to keep the same length
-    gaze_velocity = np.append(gaze_velocity, gaze_velocity[-1])
+def gaze_remove_invalid_samples(data, gaze_validity):
     
-    return gaze_velocity
+    invalid_samples = gaze_validity == 1
+    data[invalid_samples] = np.nan
+    
+    return data
+
+def calculate_velocity(data, cart_motion_chans=np.arange(0,3), fs=250):
+    """
+    Calculate the velocity in meters per second (m/s) from the motion data.
+
+    Parameters:
+    data (numpy.ndarray): 2D array of motion data with shape (channels, samples)
+    cart_motion_chans (list): List of indices for the Cartesian motion channels (x, y, z)
+    fs (float): Sampling frequency in Hz
+
+    Returns:
+    numpy.ndarray: Velocity in meters per second (m/s)
+    """
+    # Initialize the velocity array
+    velocity = np.zeros(data.shape[1] - 1)
+
+    # Calculate the differences in the Cartesian coordinates
+    tmp = np.diff(data[cart_motion_chans, :], axis=1)
+
+    # Calculate the Euclidean distance (displacement) between consecutive samples
+    displacement = np.sqrt(np.sum(tmp**2, axis=0))
+
+    # Calculate the time interval between samples
+    dt = 1 / fs
+
+    # Calculate the velocity in meters per second (m/s)
+    velocity = displacement / dt
+
+    # Repeat the last value to keep the same length
+    velocity = np.append(velocity, velocity[-1])
+
+    return velocity
+
+# # TODO fix this with real-time data
+# def compute_velocity(data, srate=250, cart_motion_chans = np.arange(0,3)):
+
+#     # window_size = int(np.floor(window_size * 0.001 * srate)) # ms to samples
+#     # n_windows = int(np.floor(srate / window_size))
+
+#     # data = data[0:n_windows*window_size,:]
+
+#     velocity = np.zeros(data.shape[1] - 1)
+
+#     tmp = np.diff(data[cart_motion_chans, :], axis=1)
+#     velocity = np.sqrt(np.sum(tmp**2, axis=0))
+
+#     # repeat last value to keep the same length
+#     velocity = np.append(velocity, velocity[-1])
+    
+#     return velocity
 
 # def windowed_mean(data, n_windows = 10):
 #     """Computes windowed mean of data
