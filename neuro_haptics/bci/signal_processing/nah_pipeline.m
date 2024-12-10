@@ -92,7 +92,7 @@ function nah_pipeline(subjects)
     
         EEG = pop_epoch( EEG, {  'event'  }, epoch_tw, 'epochinfo', 'yes');
     
-        % clean epochs and remove 10 percent of bad epochs from data
+        % clean epochs and remove 5 percent of bad epochs from data
         [~, rmepochs] = pop_autorej(EEG, 'nogui', 'on');
         rmepochs = rmepochs(1:.1*size(EEG.data,3));
     
