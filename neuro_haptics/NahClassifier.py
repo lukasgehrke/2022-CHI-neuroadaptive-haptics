@@ -24,7 +24,9 @@ class NahClassifier:
         with open(model_path+'lda_scores.json', 'r') as f:
             self.lda_scores = json.load(f)
             self.lda_scores = [item for sublist in self.lda_scores for item in sublist]
-    
+        self.min_boundary = np.percentile(self.lda_scores, 5)
+        self.max_boundary = np.percentile(self.lda_scores, 95)
+
         # resolve streams
         streams = None
         while streams is None:
@@ -118,7 +120,7 @@ class NahClassifier:
 
         return prediction, score #probs_target_class
     
-    def normalize_to_boundaries(self, score):
+    def normalize_to_boundaries(self, score, update_boundaries=False):
         """
         Normalize the score to the range [0, 1] using min-max normalization
         based on boundaries specified in the JSON file.
@@ -130,17 +132,20 @@ class NahClassifier:
         float: The normalized score in the range [0, 1]
         """
 
-        # add score to the list of lda scores
-        self.lda_scores.append(score)
-        # # save lda_scores with self.pID in filename in subfolder lda_scores
-        # with open(self.path + os.sep + self.pID + os.sep + 'lda_scores.json', 'w') as f:
-        #     json.dump(self.lda_scores , f)
-        
-        min_boundary = np.percentile(self.lda_scores, 5)
-        max_boundary = np.percentile(self.lda_scores, 95)
+        if update_boundaries:
+            # add score to the list of lda scores
+            self.lda_scores.append(score)
+            
+            self.min_boundary = np.percentile(self.lda_scores, 5)
+            self.max_boundary = np.percentile(self.lda_scores, 95)
 
+            # save lda_scores with self.pID in filename in subfolder lda_scores
+            with open(self.path + os.sep + self.pID + os.sep + 'lda_scores.json', 'w') as f:
+                json.dump(self.lda_scores , f)
+            print(f"Updated boundaries: {self.min_boundary:.2f}, {self.max_boundary:.2f}")
+        
         # Perform min-max normalization
-        normalized_score = (score - min_boundary) / (max_boundary - min_boundary)
+        normalized_score = (score - self.min_boundary) / (self.max_boundary - self.min_boundary)
 
         # Ensure the normalized score is within the range [0, 1]
         normalized_score = np.clip(normalized_score, 0, 1)
@@ -238,14 +243,16 @@ class NahClassifier:
 
     def compute_features(self, data, modality):
 
-        # Consider only data from the first 450 ms
-        srate = data.shape[0] / 1.0  # Assumes data is collected for 1 second
-        num_samples_600ms = int(0.6 * srate)
+        # # Consider only data from the first 450 ms
+        # srate = data.shape[0] / 1.0  # Assumes data is collected for 1 second
+        # num_samples_600ms = int(0.6 * srate)
 
-        if num_samples_600ms > 144:
-            data = data[:144, :].T
-        else:
-            data = data[:num_samples_600ms, :].T
+        data = data[:144, :].T
+
+        # if num_samples_600ms > 144:
+        #     data = data[:144, :].T
+        # else:
+        #     data = data[:num_samples_600ms, :].T
 
         # eeg processing and feature extraction
         if modality == 'eeg':
@@ -254,13 +261,13 @@ class NahClassifier:
             erp_selected = np.expand_dims(erp_selected, axis=2)
             erp_selected = bandpass_filter_fft(erp_selected, 0.1, 15, 250)
 
-            if num_samples_600ms > 144:
-                data = np.array_split(erp_selected, 12, axis=1)
-                erp_selected = [np.mean(part, axis=1) for part in data]
-                erp_selected = np.array(erp_selected).T
-            else:
-                erp_selected = erp_selected.reshape(erp_selected.shape[0], 12, 12, erp_selected.shape[2])
-                erp_selected = np.squeeze(np.mean(erp_selected, axis=2))
+            # if num_samples_600ms > 144:
+            #     data = np.array_split(erp_selected, 12, axis=1)
+            #     erp_selected = [np.mean(part, axis=1) for part in data]
+            #     erp_selected = np.array(erp_selected).T
+            # else:
+            erp_selected = erp_selected.reshape(erp_selected.shape[0], 12, 12, erp_selected.shape[2])
+            erp_selected = np.squeeze(np.mean(erp_selected, axis=2))
             
             baseline = erp_selected[:,0]
             erp_corrected = erp_selected - baseline[:, np.newaxis]
@@ -344,7 +351,7 @@ class NahClassifier:
         print(f"Score: {score:.2f}")
 
         # Normalize the score to the range [0, 1]
-        score = self.normalize_to_boundaries(score)
+        score = self.normalize_to_boundaries(score, update_boundaries=False)
         print(f"Normalized score: {score:.2f}")
 
         return score
