@@ -92,6 +92,7 @@ class NahClassifier:
 
             # Connects to EEG stream
             self.sr = StreamReceiver(bufsize=1, winsize=1, stream_name='BrainVision RDA')
+            time.sleep(1)
             
 
         # set up outlet for sending predictions
@@ -171,9 +172,11 @@ class NahClassifier:
 
         # Update each stream buffer with new data
         self.sr.acquire()
+        print("Buffer acquired at time: ", time.time())
         
         # Retrieve buffer/window for the stream named 'StreamPlayer'
-        data, _ = self.sr.get_window()
+        data, _ = self.sr.get_window('BrainVision RDA')
+        print("Data acquired at time: ", time.time())
         data = np.delete(data, 0, 1) # channels info
 
         return data
@@ -372,7 +375,7 @@ class NahClassifier:
 # main
 if __name__ == "__main__":
    
-    pID = 'sub-' + "8"
+    pID = 'sub-' + "9"
     path = r'P:\Lukas_Gehrke\NAH\data\5_single-subject-EEG-analysis'
 
     classifier = NahClassifier(path, pID)
