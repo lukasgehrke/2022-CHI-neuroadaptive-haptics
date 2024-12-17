@@ -11,7 +11,7 @@ class ModifiedRandomEnvironment(ModifiedRandomEnvironment):
         self.same_action = None
         self.t = 0
         self.convergence_count_start = params.get('convergence_count_start', 0)
-        self.convergence_consecutive_limit = params.get('convergence_consecutive_limit', 10)
+        self.convergence_consecutive_limit = params.get('convergence_consecutive_limit', 5)
         self.consecutive_count = 0
 
 

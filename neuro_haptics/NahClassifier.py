@@ -5,6 +5,11 @@ from bci_funcs import windowed_mean, calculate_velocity, bandpass_filter_fft, ga
 # import concurrent.futures
 from bsl import StreamReceiver
 
+BUFFER_DURATION = 1  # Duration of the buffer in seconds
+NUM_CHANNELS = 64    # Number of EEG channels
+SAMPLE_RATE = 250    # Expected sampling rate of the EEG device (adjust as needed)
+BUFFER_SIZE = SAMPLE_RATE * BUFFER_DURATION  # Total samples for 1 second per channel
+
 class NahClassifier:
     def __init__(self, path, pID):
 
@@ -27,22 +32,22 @@ class NahClassifier:
         self.min_boundary = np.percentile(self.lda_scores, 5)
         self.max_boundary = np.percentile(self.lda_scores, 95)
 
+        # Initialize a NumPy buffer for 1 second of data (NUM_CHANNELS x BUFFER_SIZE)
+        self.buffer = np.zeros((BUFFER_SIZE, NUM_CHANNELS))
+
         # resolve streams
         streams = None
         while streams is None:
 
-            # print("Looking for EEG stream...")	
-            # streams = resolve_byprop('name', 'BrainVision RDA')
-            
-            # # Don't think this is necessary, since resolve_prop will wait until it finds the stream
-            # if not streams:
-            #     print("No EEG stream found, retrying...")
-            #     time.sleep(1)
-            
-            # print("EEG stream found!")
-
-            # # init EEG stream inlet
-            # self.eeg_inlet = StreamInlet(streams[0])
+            print("Looking for EEG stream...")	
+            streams = resolve_byprop('name', 'BrainVision RDA')
+            # Don't think this is necessary, since resolve_prop will wait until it finds the stream
+            if not streams:
+                print("No EEG stream found, retrying...")
+                time.sleep(1)
+            print("EEG stream found!")
+            # init EEG stream inlet
+            self.eeg_inlet = StreamInlet(streams[0])
 
             # print("Looking for Hand motion stream...")
             # streams = resolve_byprop('name', 'NAH_rb_handRight')
@@ -90,9 +95,9 @@ class NahClassifier:
             # # init marker stream inlet
             # self.fixations_inlet = StreamInlet(streams[0])
 
-            # Connects to EEG stream
-            self.sr = StreamReceiver(bufsize=1, winsize=1, stream_name='BrainVision RDA')
-            time.sleep(1)
+            # # Connects to EEG stream
+            # self.sr = StreamReceiver(bufsize=1, winsize=1, stream_name='BrainVision RDA')
+            # time.sleep(1)
             
 
         # set up outlet for sending predictions
@@ -180,6 +185,24 @@ class NahClassifier:
         data = np.delete(data, 0, 1) # channels info
 
         return data
+
+    def get_data_lsl(self, start_time):
+        
+        sample_index = 0  # To track the position in the buffer
+        
+        # Collect EEG data for 1 second
+        while time.time() - start_time < BUFFER_DURATION:
+            chunk, _ = self.eeg_inlet.pull_chunk()  # Get a chunk of data
+            if chunk:
+                chunk = np.array(chunk)  # Convert to NumPy array
+                num_samples = chunk.shape[0]
+
+                # Add data to the buffer, ensuring we don't exceed the buffer size
+                for i in range(num_samples):
+                    self.buffer[sample_index % BUFFER_SIZE] = chunk[i, :NUM_CHANNELS]  # Circular overwrite
+                    sample_index += 1
+
+        return self.buffer
 
     def get_data(self, data_type, grab_ts):
         """
@@ -344,9 +367,9 @@ class NahClassifier:
         # fix_delay = results['marker']        
         # feature_vector = np.concatenate((eeg_feat, [motion_feat], [fix_delay]), axis=0).reshape(1, -1)
 
-        tic_data_pull = time.time()
-        eeg_data = self.get_data_bsl()
-        print(f"Time to get data: {time.time() - tic_data_pull}")
+        # eeg_data = self.get_data_bsl()
+        eeg_data = self.get_data_lsl(grab_ts)
+        print(f"Time to get data: {time.time() - grab_ts}")
         eeg_feat = self.compute_features(eeg_data, 'eeg')
 
         feature_vector = eeg_feat.reshape(1, -1)
@@ -375,7 +398,7 @@ class NahClassifier:
 # main
 if __name__ == "__main__":
    
-    pID = 'sub-' + "9"
+    pID = 'sub-' + "14"
     path = r'P:\Lukas_Gehrke\NAH\data\5_single-subject-EEG-analysis'
 
     classifier = NahClassifier(path, pID)
@@ -383,24 +406,37 @@ if __name__ == "__main__":
     time.sleep(2) # wait for the streams buffers to fill up
     last_grab_number = -1
     
-    while True:
+    try:
+        while True:
 
-        marker, grab_ts = classifier.marker_inlet.pull_sample()
+            # # for testing
+            # grab_ts = time.time()
 
-        if marker and 'What:' in marker[0]:
-            marker_data = marker[0].split(';')
-            marker_dict = {item.split(':')[0]: item.split(':')[1] for item in marker_data}
-            what = marker_dict.get('What')
-            
-            if what == 'grab':
-                current_grab_number = int(marker_dict.get('Number', 0))
+            # tic = time.time()
+            # label = classifier.choose_nah_label(grab_ts)
+            # print(f"Time to choose label: {time.time() - tic}")
 
-                if current_grab_number > last_grab_number:           
-                    print(f"Grab {current_grab_number} detected: ", marker)
+            # classifier.send_nah_label_to_ai(label)
+            # print("Label sent to AI: ", label)
 
-                    tic = time.time()
-                    label = classifier.choose_nah_label(grab_ts)
-                    print(f"Time to choose label: {time.time() - tic}")
+            marker, grab_ts = classifier.marker_inlet.pull_sample()
 
-                    classifier.send_nah_label_to_ai(label)
-                    print("Label sent to AI: ", label)
+            if marker and 'What:' in marker[0]:
+                marker_data = marker[0].split(';')
+                marker_dict = {item.split(':')[0]: item.split(':')[1] for item in marker_data}
+                what = marker_dict.get('What')
+                
+                if what == 'grab':
+                    current_grab_number = int(marker_dict.get('Number', 0))
+
+                    if current_grab_number > last_grab_number:           
+                        print(f"Grab {current_grab_number} detected: ", marker)
+
+                        tic = time.time()
+                        label = classifier.choose_nah_label(tic)
+                        print(f"Time to choose label: {time.time() - tic}")
+
+                        classifier.send_nah_label_to_ai(label)
+                        print("Label sent to AI: ", label)
+    except KeyboardInterrupt:
+        print("Exiting...")
